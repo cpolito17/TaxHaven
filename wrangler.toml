@@ -1,0 +1,17 @@
+name = "taxhaven"
+main = "worker/index.js"
+compatibility_date = "2025-09-01"
+
+# Static assets (the single-file game) served via the ASSETS binding.
+# run_worker_first: the Worker always runs first and maps the /taxhaven path
+# onto the bundled index.html, instead of the asset router matching the path.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+# Mount the worker at charliepolito.com/taxhaven and below.
+# Requires the charliepolito.com zone to be active on this Cloudflare account.
+[[routes]]
+pattern = "charliepolito.com/taxhaven*"
+zone_name = "charliepolito.com"

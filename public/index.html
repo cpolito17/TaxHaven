@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tax Haven — redesign America's taxes &amp; budget</title>
+<style>
+/* ============================ Design system ============================ */
+:root{
+  --bg:#EDF6F9; --nav:#006D77; --nav-d:#004f57; --income:#83C5BE; --income-d:#4a9d95;
+  --budget:#FFC7B4; --budget-d:#e8997f; --event:#E29578;
+  --ink:#143b40; --muted:#5d8388; --card:#ffffff; --line:#d2e6e9; --line-d:#bcd9dd;
+  --good:#2a9d8f; --warn:#e9a23b; --bad:#d1495b;
+  --m-econ:#2a9d8f; --m-appr:#3d7dd6; --m-treas:#d9a521; --m-equal:#9b5de5;
+  --shadow:0 2px 10px rgba(0,60,70,.08); --shadow-l:0 10px 40px rgba(0,40,50,.22);
+  --r:14px; --r-s:9px;
+  font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink)}
+body{line-height:1.45;-webkit-font-smoothing:antialiased;padding-bottom:96px}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+h1,h2,h3{font-weight:650;letter-spacing:-.01em}
+.hidden{display:none !important}
+.mono{font-variant-numeric:tabular-nums}
+
+/* ============================ Status bar ============================ */
+.status{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,var(--nav),var(--nav-d));
+  color:#eafcfd;box-shadow:var(--shadow);}
+.status-inner{max-width:1140px;margin:0 auto;padding:10px 22px;display:grid;
+  grid-template-columns:auto 1fr auto;gap:22px;align-items:center}
+.brand{display:flex;flex-direction:column;gap:1px;white-space:nowrap}
+.brand .name{font-size:21px;font-weight:750;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.brand .name .mark{font-size:18px}
+.brand .term{font-size:12px;color:#9fd6da;font-weight:600}
+.meters{display:flex;gap:16px;justify-content:center}
+.meter{min-width:118px}
+.meter .top{display:flex;justify-content:space-between;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;color:#cdeef0;margin-bottom:3px}
+.meter .val{color:#fff}
+.meter .bar{height:9px;border-radius:6px;background:rgba(255,255,255,.16);position:relative;overflow:visible}
+.meter .fill{height:100%;border-radius:6px;transition:width .9s cubic-bezier(.22,1,.36,1)}
+.meter .tick{position:absolute;top:-3px;width:2px;height:15px;background:#fff;opacity:.55;
+  border-radius:2px;transition:left .35s ease;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.meter.econ .fill{background:var(--m-econ)} .meter.appr .fill{background:var(--m-appr)}
+.meter.treas .fill{background:var(--m-treas)} .meter.equal .fill{background:var(--m-equal)}
+.meter .fig{font-size:10.5px;color:#a9dde0;margin-top:3px;white-space:nowrap}
+.ledger{display:flex;gap:18px;text-align:right}
+.ledger .item{display:flex;flex-direction:column}
+.ledger .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#9fd6da;font-weight:600}
+.ledger .v{font-size:16px;font-weight:700}
+.ledger .v.pos{color:#7ff0c8} .ledger .v.neg{color:#ffb3a7}
+
+/* ============================ Tabs ============================ */
+.tabs{max-width:1140px;margin:18px auto 0;padding:0 22px;display:flex;gap:10px}
+.tab-btn{flex:0 0 auto;padding:11px 26px;border-radius:12px 12px 0 0;font-weight:700;font-size:15px;
+  background:#dceaed;color:var(--muted);transition:.18s;position:relative;top:1px}
+.tab-btn .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:middle}
+.tab-btn[data-tab="income"] .dot{background:var(--income-d)}
+.tab-btn[data-tab="budget"] .dot{background:var(--budget-d)}
+.tab-btn.active{color:var(--ink);box-shadow:var(--shadow)}
+.tab-btn.active[data-tab="income"]{background:linear-gradient(180deg,#eafbf8,#fff);border-bottom:3px solid var(--income-d)}
+.tab-btn.active[data-tab="budget"]{background:linear-gradient(180deg,#fff2ec,#fff);border-bottom:3px solid var(--budget-d)}
+
+/* ============================ Tab body ============================ */
+main{max-width:1140px;margin:0 auto;padding:0 22px}
+.tab-panel{background:var(--card);border-radius:0 var(--r) var(--r) var(--r);box-shadow:var(--shadow);
+  padding:22px;border:1px solid var(--line)}
+.tab-panel.income{border-top:3px solid var(--income-d)}
+.tab-panel.budget{border-top:3px solid var(--budget-d)}
+.tab-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+.tab-head h2{font-size:18px}
+.tab-head p{font-size:13px;color:var(--muted);max-width:560px}
+
+.hero{display:grid;grid-template-columns:340px 1fr;gap:26px;align-items:center;margin:6px 0 20px}
+@media(max-width:880px){.hero{grid-template-columns:1fr}}
+.pie-box{display:flex;flex-direction:column;align-items:center;gap:8px}
+.pie-wrap{position:relative;width:240px;height:240px}
+.pie-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.pie-center .big{font-size:25px;font-weight:750}
+.pie-center .sub{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.pie svg{transform:rotate(-90deg)}
+.pie circle{transition:stroke-dasharray .6s cubic-bezier(.22,1,.36,1),stroke-dashoffset .6s cubic-bezier(.22,1,.36,1)}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:5px 18px;align-self:center;width:100%}
+.legend .row{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.legend .row.dim{opacity:.4}
+.legend .sw{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.legend .lbl{flex:1;color:var(--ink)}
+.legend .amt{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.legend .pct{color:var(--muted);font-size:11px;min-width:34px;text-align:right}
+.legend .locked{font-size:9px;background:#e4ecee;color:var(--muted);padding:1px 5px;border-radius:5px;text-transform:uppercase;letter-spacing:.03em;font-weight:700}
+
+/* ============================ Controls ============================ */
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.controls{grid-template-columns:1fr}}
+.group{border:1px solid var(--line);border-radius:var(--r-s);padding:13px 15px;background:#fbfeff}
+.group.span2{grid-column:1 / -1}
+.group > .g-title{font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.ctrl{margin:11px 0}
+.ctrl:first-of-type{margin-top:0}
+.ctrl .lab{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.ctrl .lab .name{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px}
+.ctrl .lab .read{font-size:13.5px;font-weight:750;font-variant-numeric:tabular-nums}
+.info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;
+  background:#dceaed;color:var(--muted);font-size:10px;font-weight:800;cursor:help;flex:0 0 auto}
+.info:hover{background:var(--nav);color:#fff}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:6px;
+  background:var(--track,linear-gradient(90deg,var(--income) 0%,#e3eef0 0%));outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:19px;height:19px;border-radius:50%;
+  background:#fff;border:3px solid var(--thumb,var(--income-d));box-shadow:0 1px 4px rgba(0,40,50,.3);transition:transform .08s}
+input[type=range]::-webkit-slider-thumb:active{transform:scale(1.18)}
+input[type=range]::-moz-range-thumb{width:19px;height:19px;border-radius:50%;background:#fff;border:3px solid var(--thumb,var(--income-d));box-shadow:0 1px 4px rgba(0,40,50,.3)}
+input[type=range]:disabled{opacity:.5;cursor:not-allowed}
+
+.toggle{display:flex;align-items:center;gap:10px;justify-content:space-between;cursor:pointer}
+.switch{position:relative;width:42px;height:23px;border-radius:14px;background:#cddce0;flex:0 0 auto;transition:.2s}
+.switch::after{content:"";position:absolute;top:2.5px;left:2.5px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
+.toggle.on .switch{background:var(--income-d)}
+.budget .toggle.on .switch{background:var(--budget-d)}
+.toggle.on .switch::after{transform:translateX(19px)}
+
+select,input[type=number]{font-family:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--line-d);
+  border-radius:7px;background:#fff;color:var(--ink);font-variant-numeric:tabular-nums}
+select{cursor:pointer}
+
+/* Bracket editor */
+.brackets{display:flex;flex-direction:column;gap:9px}
+.band{display:grid;grid-template-columns:64px 1fr 54px 26px;gap:10px;align-items:center;
+  background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.band .from{font-size:11px;color:var(--muted);font-weight:600}
+.band .from input{width:100%;font-size:12px;padding:4px 5px}
+.band .ratev{font-size:13.5px;font-weight:750;text-align:right;font-variant-numeric:tabular-nums}
+.band .rm{width:22px;height:22px;border-radius:6px;background:#f0e2df;color:#b5544a;font-weight:800;font-size:14px;line-height:1}
+.band .rm:hover{background:#e9b8b0}
+.band.locked-from .from input{opacity:.55;pointer-events:none}
+.band-add{align-self:flex-start;font-size:12.5px;font-weight:700;color:var(--income-d);
+  background:#e7f4f2;padding:7px 13px;border-radius:8px;margin-top:2px}
+.band-add:hover{background:#d3ebe7}
+.band-add:disabled{opacity:.45;cursor:not-allowed}
+.samples{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.samples .s{flex:1;min-width:84px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 8px;text-align:center}
+.samples .s .i{font-size:11px;color:var(--muted);font-weight:600}
+.samples .s .r{font-size:15px;font-weight:750}
+.samples .s .r small{font-size:10px;color:var(--muted);font-weight:600}
+
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.preset{font-size:12.5px;font-weight:700;padding:8px 13px;border-radius:9px;background:#eef6f7;
+  border:1px solid var(--line);color:var(--ink);transition:.15s;text-align:left}
+.preset:hover{border-color:var(--income-d);background:#e3f1f0}
+.preset .pn{display:block}
+.preset .pd{display:block;font-size:10.5px;color:var(--muted);font-weight:500;margin-top:1px;max-width:150px}
+
+.locked-line{display:flex;justify-content:space-between;align-items:center;background:#eef1f2;
+  border:1px dashed var(--line-d);border-radius:8px;padding:9px 12px;font-size:13px}
+.locked-line .lk{font-size:9px;background:#dde4e6;color:var(--muted);padding:2px 6px;border-radius:5px;text-transform:uppercase;letter-spacing:.03em;font-weight:700}
+
+/* ============================ Action zone ============================ */
+.action{position:fixed;bottom:0;left:0;right:0;z-index:42;background:linear-gradient(180deg,rgba(237,246,249,.4),var(--bg) 38%);
+  backdrop-filter:blur(3px);border-top:1px solid var(--line)}
+.action-inner{max-width:1140px;margin:0 auto;padding:13px 22px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.balance-big{display:flex;align-items:baseline;gap:12px}
+.balance-big .lab{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+.balance-big .v{font-size:27px;font-weight:800;font-variant-numeric:tabular-nums}
+.balance-big .v.pos{color:var(--good)} .balance-big .v.neg{color:var(--bad)}
+.balance-big .sub{font-size:12px;color:var(--muted)}
+.btn-sim{background:linear-gradient(180deg,#e8826a,var(--event));color:#fff;font-size:16px;font-weight:750;
+  padding:14px 30px;border-radius:13px;box-shadow:0 4px 16px rgba(226,149,120,.5);transition:.15s;white-space:nowrap}
+.btn-sim:hover{transform:translateY(-1px);box-shadow:0 7px 22px rgba(226,149,120,.6)}
+.btn-sim:active{transform:translateY(0)}
+.btn-sim:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none}
+
+/* ============================ Tooltip ============================ */
+#tooltip{position:fixed;z-index:100;max-width:300px;background:#0c2e32;color:#eafcfd;padding:11px 13px;
+  border-radius:10px;box-shadow:var(--shadow-l);font-size:12.5px;line-height:1.5;pointer-events:none;opacity:0;
+  transform:translateY(4px);transition:opacity .12s,transform .12s}
+#tooltip.show{opacity:1;transform:translateY(0)}
+#tooltip .tt{display:block;margin-top:5px}
+#tooltip .tt:first-child{margin-top:0}
+#tooltip .tt b{color:#9be7d6;font-weight:700} #tooltip .tt.hi b{color:#ffc7b4} #tooltip .tt.lo b{color:#ffd98a}
+#tooltip .tt.an b{color:#b9d3ff}
+
+/* ============================ Overlays ============================ */
+.overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:rgba(8,40,45,.55);backdrop-filter:blur(4px);opacity:0;animation:fade .25s forwards}
+@keyframes fade{to{opacity:1}}
+.modal{background:var(--card);border-radius:18px;box-shadow:var(--shadow-l);max-width:560px;width:100%;
+  max-height:88vh;overflow:auto;padding:28px;animation:pop .35s cubic-bezier(.2,1.2,.3,1)}
+.modal.wide{max-width:680px}
+@keyframes pop{from{transform:scale(.9) translateY(14px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal h2{font-size:22px;margin-bottom:6px}
+.modal .lead{color:var(--muted);font-size:14px;margin-bottom:18px}
+.modal .close-row{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+.btn{padding:11px 22px;border-radius:11px;font-weight:700;font-size:14px;transition:.15s}
+.btn-primary{background:var(--nav);color:#fff}.btn-primary:hover{background:var(--nav-d)}
+.btn-ghost{background:#eef6f7;color:var(--ink)}.btn-ghost:hover{background:#e0eef0}
+.howto-list{display:flex;flex-direction:column;gap:13px;margin:6px 0}
+.howto-list .h{display:flex;gap:13px;align-items:flex-start}
+.howto-list .n{flex:0 0 28px;height:28px;border-radius:8px;background:var(--income);color:#063b3f;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+.howto-list .t{font-size:13.5px}.howto-list .t b{color:var(--ink)}
+
+/* Event popups */
+#event-layer{position:fixed;inset:0;z-index:85;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(8,40,45,.5);backdrop-filter:blur(4px)}
+#event-layer.show{display:flex}
+.event-card{background:#fff;border-radius:18px;max-width:440px;width:100%;overflow:hidden;box-shadow:var(--shadow-l);
+  animation:evpop .45s cubic-bezier(.2,1.3,.3,1)}
+@keyframes evpop{from{transform:scale(.8) translateY(30px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.event-card .ev-band{padding:18px 22px;color:#fff;display:flex;align-items:center;gap:13px}
+.event-card .ev-ico{font-size:30px}
+.event-card .ev-kind{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.9}
+.event-card .ev-name{font-size:21px;font-weight:750}
+.event-card.danger .ev-band{background:linear-gradient(120deg,#c44536,#d1495b)}
+.event-card.event .ev-band{background:linear-gradient(120deg,#cf6b4a,var(--event))}
+.event-card.good .ev-band{background:linear-gradient(120deg,#2a9d8f,#43b59a)}
+.event-card .ev-body{padding:20px 22px}
+.event-card .ev-text{font-size:14px;color:#2b4c50;margin-bottom:16px}
+.event-card .ev-effects{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.eff-chip{font-size:12px;font-weight:700;padding:5px 11px;border-radius:20px;font-variant-numeric:tabular-nums}
+.eff-chip.up{background:#dcf3ee;color:#1d7a6c}.eff-chip.down{background:#fae3e6;color:#bd3346}
+.event-card .ev-cont{width:100%;padding:12px;border-radius:11px;background:var(--nav);color:#fff;font-weight:750;font-size:14px}
+.event-card .ev-cont:hover{background:var(--nav-d)}
+
+/* Report panel */
+.report .term-tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--event)}
+.meter-moves{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0 6px}
+.mm{background:#f7fbfc;border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.mm .mt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+.mm .mv{display:flex;align-items:baseline;gap:7px;font-variant-numeric:tabular-nums}
+.mm .mv .now{font-size:19px;font-weight:800}
+.mm .mv .ch{font-size:12.5px;font-weight:700}
+.mm .mv .ch.up{color:var(--good)}.mm .mv .ch.down{color:var(--bad)}
+.chain{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.chain .c{display:flex;gap:11px;font-size:13.5px;line-height:1.5}
+.chain .c .ic{flex:0 0 9px;width:9px;height:9px;border-radius:50%;margin-top:5px}
+.chain .c.approval .ic{background:var(--m-appr)}.chain .c.economy .ic{background:var(--m-econ)}
+.chain .c.treasury .ic{background:var(--m-treas)}.chain .c.equality .ic{background:var(--m-equal)}
+.chain .c.event .ic{background:var(--event)}
+.chain .c.event{color:#9a4a32}
+
+/* Scorecard */
+.score-hero{display:flex;align-items:center;gap:22px;margin-bottom:6px}
+.grade-badge{flex:0 0 auto;width:96px;height:96px;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--nav),var(--income-d));color:#fff;box-shadow:var(--shadow)}
+.grade-badge .g{font-size:44px;font-weight:850;line-height:1}
+.grade-badge .s{font-size:11px;font-weight:700;opacity:.85}
+.score-hero .legacy{font-size:17px;font-weight:700;line-height:1.35}
+.score-hero .endr{font-size:12.5px;color:var(--muted);margin-top:3px}
+.final-meters{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:9px;margin:16px 0}
+.fm{background:#f7fbfc;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.fm .l{font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--muted)}
+.fm .v{font-size:22px;font-weight:800}
+.headlines{display:flex;flex-direction:column;gap:7px;background:#fbfeff;border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:10px}
+.headlines .hl{display:flex;justify-content:space-between;font-size:13px}
+.headlines .hl .k{color:var(--muted)}.headlines .hl .v{font-weight:750;font-variant-numeric:tabular-nums}
+.best{font-size:13px;text-align:center;padding:9px;border-radius:10px;margin-top:4px}
+.best.new{background:#dcf3ee;color:#1d7a6c;font-weight:750}
+.best.old{background:#eef6f7;color:var(--muted)}
+.datanote{font-size:11px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
+.datanote a{color:var(--income-d)}
+</style>
+</head>
+<body>
+
+<header class="status">
+  <div class="status-inner">
+    <div class="brand">
+      <span class="name"><span class="mark">🏛️</span> Tax Haven</span>
+      <span class="term" id="term-counter">Term 1 · Year 1–4 of 12</span>
+    </div>
+    <div class="meters" id="meters"></div>
+    <div class="ledger" id="ledger"></div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="income"><span class="dot"></span>Income</button>
+  <button class="tab-btn" data-tab="budget"><span class="dot"></span>Budget</button>
+</nav>
+
+<main>
+  <section class="tab-panel income" id="panel-income">
+    <div class="tab-head">
+      <div><h2>Federal Revenue</h2><p>Design the income tax system and every other lever the Treasury collects from. The pie shows where each dollar of revenue comes from.</p></div>
+    </div>
+    <div class="hero">
+      <div class="pie-box">
+        <div class="pie pie-wrap" id="pie-income"></div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600">Revenue by source</div>
+      </div>
+      <div class="legend" id="legend-income"></div>
+    </div>
+    <div class="controls" id="income-controls"></div>
+  </section>
+
+  <section class="tab-panel budget hidden" id="panel-budget">
+    <div class="tab-head">
+      <div><h2>Federal Budget</h2><p>Set spending for every category — realistic or not. Net interest is forced on you and grows with the debt. The pie shows where each dollar goes.</p></div>
+    </div>
+    <div class="hero">
+      <div class="pie-box">
+        <div class="pie pie-wrap" id="pie-budget"></div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600">Spending by category</div>
+      </div>
+      <div class="legend" id="legend-budget"></div>
+    </div>
+    <div class="controls budget" id="budget-controls"></div>
+  </section>
+</main>
+
+<footer class="action">
+  <div class="action-inner">
+    <div class="balance-big">
+      <span class="lab" id="bal-lab">Balance</span>
+      <span class="v" id="bal-val">—</span>
+      <span class="sub" id="bal-sub"></span>
+    </div>
+    <button class="btn-sim" id="simulate">Simulate Term 1 →</button>
+  </div>
+</footer>
+
+<div id="tooltip"></div>
+<div id="event-layer"></div>
+<div id="overlay-root"></div>
+
+<script>
+/* ============================================================================
+   TAX HAVEN — Simulation Engine
+   Pure logic, no DOM. Works in node (module.exports) and browser (window.TH).
+   All money in trillions of USD unless noted. Baseline ≈ US FY2024 actuals.
+   ========================================================================== */
+(function (root) {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // 0. World constants (baked-in, FY2024 actuals — approximate)
+  // ---------------------------------------------------------------------------
+  const HH = 131e6;            // US households
+  const KIDS = 73e6;           // US children
+  const GDP0 = 29.0;           // nominal GDP, trillions
+  const DEBT0 = 28.2;          // debt held by public, trillions
+  const INTEREST_BASE = 0.031; // effective interest rate on debt (→ ~0.87T net interest)
+  const BASE_GROWTH = 0.021;   // baseline real-ish GDP growth
+
+  // Actual receipts by source (trillions). Model response scales these.
+  const ACTUAL_REV = {
+    individual: 2.43,  // individual income tax (incl. capital gains)
+    payroll: 1.71,     // social insurance / payroll
+    corporate: 0.53,
+    tariffs: 0.077,
+    estate: 0.034,
+    other: 0.27        // excise + misc (fixed-ish)
+  };
+
+  // Actual outlays by category (trillions). netInterest computed separately.
+  const ACTUAL_SPEND = {
+    socialSecurity: 1.46,
+    medicare: 0.85,
+    health: 0.91,       // Medicaid + other health
+    defense: 0.87,
+    incomeSecurity: 0.67,
+    veterans: 0.32,
+    education: 0.27,
+    transportation: 0.13,
+    science: 0.04,
+    international: 0.06,
+    other: 0.30
+  };
+
+  // Spending categories metadata (for UI + sim grouping)
+  const SPEND_CATS = [
+    { key: 'socialSecurity', label: 'Social Security', kind: 'safety' },
+    { key: 'medicare',       label: 'Medicare',         kind: 'safety' },
+    { key: 'health',         label: 'Medicaid & Health',kind: 'safety' },
+    { key: 'defense',        label: 'Defense',          kind: 'defense' },
+    { key: 'incomeSecurity', label: 'Income Security',  kind: 'safety' },
+    { key: 'veterans',       label: 'Veterans',         kind: 'safety' },
+    { key: 'education',      label: 'Education',         kind: 'invest' },
+    { key: 'transportation', label: 'Transportation',   kind: 'invest' },
+    { key: 'science',        label: 'Science',          kind: 'invest' },
+    { key: 'international',   label: 'International',     kind: 'other' },
+    { key: 'other',          label: 'Everything Else',  kind: 'other' }
+  ];
+
+  // Representative households spanning the income distribution.
+  // pop sums to 1. capitalShare = fraction of income from capital gains/dividends.
+  // eti = elasticity of taxable income (avoidance/flight responsiveness).
+  const SEGMENTS = [
+    { key:'poor',     label:'Working poor', income:20000,   pop:0.20,  capitalShare:0.01, cons:0.98, kids:0.4, wealth:5000,     eti:0.02 },
+    { key:'lowermid', label:'Lower middle', income:45000,   pop:0.25,  capitalShare:0.02, cons:0.95, kids:0.6, wealth:40000,    eti:0.05 },
+    { key:'middle',   label:'Middle',       income:75000,   pop:0.25,  capitalShare:0.03, cons:0.90, kids:0.7, wealth:150000,   eti:0.10 },
+    { key:'uppermid', label:'Upper middle', income:140000,  pop:0.20,  capitalShare:0.06, cons:0.80, kids:0.8, wealth:500000,   eti:0.18 },
+    { key:'affluent', label:'Affluent',     income:300000,  pop:0.07,  capitalShare:0.15, cons:0.65, kids:0.7, wealth:1500000,  eti:0.30 },
+    { key:'top1',     label:'Top 1%',       income:900000,  pop:0.025, capitalShare:0.35, cons:0.50, kids:0.6, wealth:8000000,  eti:0.45 },
+    { key:'top01',    label:'Top 0.1%',     income:5000000, pop:0.005, capitalShare:0.60, cons:0.30, kids:0.5, wealth:60000000, eti:0.65 }
+  ];
+  const MEDIAN_KEY = 'middle';
+  const CAP_ETI_MULT = 1.8;     // capital flees faster than labor income
+  const IMPORT_SHARE = 0.15;    // fraction of consumption that is imported (tariff base)
+
+  // ---------------------------------------------------------------------------
+  // 1. Default configuration — the "Current US" lever values
+  // ---------------------------------------------------------------------------
+  function defaultConfig() {
+    return {
+      // Income tab
+      brackets: [
+        { threshold: 0,      rate: 0.10 },
+        { threshold: 11600,  rate: 0.12 },
+        { threshold: 47150,  rate: 0.22 },
+        { threshold: 100525, rate: 0.24 },
+        { threshold: 191950, rate: 0.32 },
+        { threshold: 243725, rate: 0.35 },
+        { threshold: 609350, rate: 0.37 }
+      ],
+      stdDeduction: 14600,
+      payrollRate: 0.153,
+      payrollCap: 168600,
+      corpRate: 0.21,
+      capMode: 'preferential',   // 'ordinary' | 'preferential' | 'custom'
+      capRate: 0.20,
+      steppedUpElim: false,      // eliminate stepped-up basis at death
+      indexInflation: false,     // index basis to inflation
+      vatRate: 0.0,
+      tariffRate: 0.025,
+      filingDouble: true,
+      estateEnabled: true,
+      estateRate: 0.40,
+      estateExemption: 13600000,
+      rollingAvg: false,
+      childGrant: 0,             // $ per child / yr
+      homeownerGrant: 0,         // $ per first-time buyer (annualized cohort)
+      charityMatch: 0,           // gov't match fraction per $ donated
+      // Budget tab (trillions)
+      spend: {
+        socialSecurity: 1.46, medicare: 0.85, health: 0.91, defense: 0.87,
+        incomeSecurity: 0.67, veterans: 0.32, education: 0.27,
+        transportation: 0.13, science: 0.04, international: 0.06, other: 0.30
+      },
+      stabFund: false,
+      surplusShare: 0.25
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 2. Tax math helpers
+  // ---------------------------------------------------------------------------
+  function bracketTax(taxable, brackets, widthFactor) {
+    if (taxable <= 0) return 0;
+    let tax = 0;
+    for (let i = 0; i < brackets.length; i++) {
+      const lo = brackets[i].threshold * widthFactor;
+      const hi = (i + 1 < brackets.length ? brackets[i + 1].threshold * widthFactor : Infinity);
+      if (taxable > lo) tax += (Math.min(taxable, hi) - lo) * brackets[i].rate;
+    }
+    return tax;
+  }
+  function marginalRate(taxable, brackets, widthFactor) {
+    let r = 0;
+    for (const b of brackets) { if (taxable >= b.threshold * widthFactor) r = b.rate; }
+    return r;
+  }
+  function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+
+  // Effective capital-gains rate given mode
+  function effCapRate(cfg, ordinaryMarginal) {
+    if (cfg.capMode === 'ordinary') return ordinaryMarginal;
+    return cfg.capRate; // preferential & custom both use capRate
+  }
+
+  // ---------------------------------------------------------------------------
+  // 3. Raw model: compute per-segment taxes & aggregate raw figures (unscaled)
+  // ---------------------------------------------------------------------------
+  function computeRaw(cfg) {
+    const widthFactor = cfg.filingDouble ? 1.8 : 1.0;
+    const baseWidth = 1.8; // baseline marginal reference uses default (married) widths
+
+    let aggIncomeTax = 0, aggPayroll = 0, aggCorpBaseShift = 0;
+    let aggVatBase = 0, aggTariffBase = 0, aggEstate = 0, aggGrants = 0;
+    let aggConsumption = 0, aggDispBottom = 0, aggDispBottomBase = 0;
+    const segOut = {};
+
+    for (const s of SEGMENTS) {
+      const ord0 = s.income * (1 - s.capitalShare);
+      const cap0 = s.income * s.capitalShare;
+
+      // Marginal rates faced (current vs baseline default) drive elasticity.
+      const ordTaxableGuess = Math.max(0, ord0 - cfg.stdDeduction);
+      const ordMarg = marginalRate(ordTaxableGuess, cfg.brackets, widthFactor);
+      const baseMarg = marginalRate(Math.max(0, ord0 - 14600), defaultConfig().brackets, baseWidth);
+      const capRate = effCapRate(cfg, ordMarg);
+      const capRate0 = 0.20;
+
+      // Behavioural response: reported income shrinks as net-of-tax rate falls.
+      const ordFactor = Math.pow((1 - ordMarg) / (1 - baseMarg), s.eti);
+      const capFactor = Math.pow(clamp((1 - capRate) / (1 - capRate0), 0.01, 5), s.eti * CAP_ETI_MULT);
+
+      const ordReported = ord0 * ordFactor;
+      let capReported = cap0 * capFactor;
+      // Capital sub-toggles adjust the realized/ taxable base.
+      if (cfg.steppedUpElim) capReported *= 1.15;     // more gains realized at death
+      if (cfg.indexInflation) capReported *= 0.88;    // inflation shielded
+
+      const ordTaxable = Math.max(0, ordReported - cfg.stdDeduction);
+      let incomeTax = bracketTax(ordTaxable, cfg.brackets, widthFactor);
+      let capTax;
+      if (cfg.capMode === 'ordinary') {
+        // stack capital on top of ordinary
+        const stacked = bracketTax(ordTaxable + capReported, cfg.brackets, widthFactor);
+        capTax = Math.max(0, stacked - incomeTax);
+      } else {
+        capTax = capReported * cfg.capRate;
+      }
+      const totalIncomeTax = incomeTax + capTax;
+
+      const payroll = cfg.payrollRate * Math.min(ordReported, cfg.payrollCap);
+
+      // Consumption & indirect taxes
+      const disposable = Math.max(0, s.income - totalIncomeTax - payroll);
+      const consumption = disposable * s.cons;
+      const vatPaid = cfg.vatRate * consumption;
+      const tariffPaid = cfg.tariffRate * consumption * IMPORT_SHARE;
+
+      // Estate (annualized via ~2% mortality)
+      let estate = 0;
+      if (cfg.estateEnabled) {
+        const taxableEstate = Math.max(0, s.wealth - cfg.estateExemption);
+        estate = taxableEstate * cfg.estateRate * 0.02;
+      }
+
+      // Grants received
+      const donations = s.income * (s.key === 'top01' || s.key === 'top1' ? 0.03 : 0.02);
+      const grants = cfg.childGrant * s.kids
+                   + (s.key === 'lowermid' || s.key === 'middle' ? cfg.homeownerGrant * 0.05 : 0)
+                   + cfg.charityMatch * donations;
+
+      const w = s.pop * HH;
+      aggIncomeTax += totalIncomeTax * w;
+      aggPayroll += payroll * w;
+      aggVatBase += consumption * w;
+      aggTariffBase += consumption * IMPORT_SHARE * w;
+      aggEstate += estate * w;
+      aggGrants += grants * w;
+      aggConsumption += consumption * w;
+      if (['poor','lowermid','middle','uppermid'].includes(s.key)) {
+        aggDispBottom += (disposable + grants) * w;
+      }
+
+      segOut[s.key] = {
+        label: s.label, income: s.income,
+        incomeTax: totalIncomeTax, payroll, vatPaid, tariffPaid, estate,
+        grants, disposable,
+        effRate: (totalIncomeTax + payroll + vatPaid + tariffPaid + estate - grants) / s.income
+      };
+    }
+
+    return {
+      widthFactor,
+      aggIncomeTax: aggIncomeTax / 1e12,
+      aggPayroll: aggPayroll / 1e12,
+      aggVatBase: aggVatBase / 1e12,
+      aggTariffBase: aggTariffBase / 1e12,
+      aggEstate: aggEstate / 1e12,
+      aggGrants: aggGrants / 1e12,
+      aggConsumption: aggConsumption / 1e12,
+      aggDispBottom: aggDispBottom / 1e12,
+      seg: segOut
+    };
+  }
+
+  // Precompute the baseline (Current US) raw figures & references.
+  const BASE = computeRaw(defaultConfig());
+  const BASE_MEDIAN_BURDEN = BASE.seg[MEDIAN_KEY].effRate;
+  const BASE_LOW_BURDEN = (BASE.seg.poor.effRate + BASE.seg.lowermid.effRate) / 2;
+  const BASE_CONS = BASE.aggConsumption;
+  const BASE_DISP = BASE.aggDispBottom;
+  const BASE_SAFETY = sumSafety(defaultConfig().spend);
+  const BASE_INVEST = defaultConfig().spend.education + defaultConfig().spend.transportation + defaultConfig().spend.science;
+  function sumSafety(sp){return sp.socialSecurity+sp.medicare+sp.health+sp.incomeSecurity+sp.veterans;}
+
+  // Baseline equality reference
+  const BASE_EQ_RAW = equalityRaw(BASE, defaultConfig(), { gdp: GDP0, grants: 0 });
+
+  // ---------------------------------------------------------------------------
+  // 4. Revenue & spending from a config (scaled to actuals via baseline ratios)
+  // ---------------------------------------------------------------------------
+  function computeBudget(cfg, state) {
+    const raw = computeRaw(cfg);
+    const gdpScale = state ? state.gdp / GDP0 : 1;
+
+    // Individual income tax: scale actual by model ratio, then by economy size.
+    const individual = ACTUAL_REV.individual * (raw.aggIncomeTax / BASE.aggIncomeTax) * gdpScale;
+    const payroll = ACTUAL_REV.payroll * (raw.aggPayroll / BASE.aggPayroll) * gdpScale;
+
+    // Corporate: rate move + profit-shifting base erosion + arbitrage with top individual rate.
+    const corpRate0 = 0.21;
+    const topInd = Math.max(...cfg.brackets.map(b => b.rate));
+    const shiftErosion = Math.pow(clamp((1 - cfg.corpRate) / (1 - corpRate0), 0.01, 5), 0.5);
+    const arbitrage = 1 + clamp((topInd - cfg.corpRate) - 0.16, 0, 0.4) * 0.6; // income shifts into corp form
+    const corporate = ACTUAL_REV.corporate * (cfg.corpRate / corpRate0) * shiftErosion * arbitrage * gdpScale;
+
+    // VAT: absolute (baseline is 0). Broad consumption base.
+    const vat = cfg.vatRate * raw.aggVatBase * 0.92 * gdpScale; // 0.92 = compliance/exemptions
+
+    // Tariffs: scale by rate; retaliation shrinks the base at high rates.
+    const tariffRate0 = 0.025;
+    const retaliation = 1 - clamp((cfg.tariffRate - 0.06) * 1.5, 0, 0.5);
+    const tariffs = ACTUAL_REV.tariffs * (cfg.tariffRate / tariffRate0) * retaliation * gdpScale;
+
+    // Estate: scaled by model ratio (handles toggle/rate/exemption).
+    const estate = cfg.estateEnabled
+      ? ACTUAL_REV.estate * (raw.aggEstate / Math.max(1e-9, BASE.aggEstate)) * gdpScale
+      : 0;
+
+    const other = ACTUAL_REV.other * gdpScale;
+
+    const revenueBySource = { individual, payroll, corporate, vat, tariffs, estate, other };
+    const grossRevenue = individual + payroll + corporate + vat + tariffs + estate + other;
+
+    // Spending
+    const grants = raw.aggGrants * gdpScale;
+    const debt = state ? state.debt : DEBT0;
+    const dtg = debt / (state ? state.gdp : GDP0);
+    // Interest rate carries a risk premium as debt-to-GDP climbs.
+    const interestRate = INTEREST_BASE + clamp((dtg - 0.9) * 0.012, 0, 0.05);
+    const netInterest = debt * interestRate;
+
+    const spendBySource = {};
+    let programSpend = 0;
+    for (const c of SPEND_CATS) { spendBySource[c.key] = cfg.spend[c.key]; programSpend += cfg.spend[c.key]; }
+    spendBySource.grants = grants;
+    spendBySource.netInterest = netInterest;
+    const totalSpend = programSpend + grants + netInterest;
+
+    const balance = grossRevenue - totalSpend;
+
+    return {
+      raw, revenueBySource, spendBySource,
+      grossRevenue, totalSpend, balance,
+      netInterest, interestRate, grants, programSpend,
+      gdp: state ? state.gdp : GDP0, debt, dtg
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 5. Equality (net progressivity) — raw index, mapped to meter later
+  // ---------------------------------------------------------------------------
+  function equalityRaw(raw, cfg, b) {
+    const top = (raw.seg.top1.effRate + raw.seg.top01.effRate) / 2;
+    const bottom = (raw.seg.poor.effRate + raw.seg.lowermid.effRate) / 2;
+    let prog = (top - bottom); // progressive tax structure if positive
+    // Redistributive spending & transfers compress the distribution strongly.
+    const safety = sumSafety(cfg.spend);
+    const gdp = b ? b.gdp : GDP0;
+    const grantsT = b ? b.grants : 0;
+    prog += clamp((safety - BASE_SAFETY) / gdp * 4.5, -0.45, 0.6);
+    prog += grantsT / gdp * 5;
+    prog += (cfg.childGrant / 4000) * 0.03;
+    prog -= cfg.vatRate * 0.22;                         // VAT is regressive (but offset by transfers)
+    prog -= clamp(cfg.tariffRate - 0.03, 0, 1) * 0.4;
+    if (cfg.capMode === 'preferential' && cfg.capRate < 0.20) prog -= 0.04;
+    if (cfg.steppedUpElim) prog += 0.02;
+    return prog;
+  }
+
+  // ---------------------------------------------------------------------------
+  // 6. The simulation — advance one term (4 years)
+  // ---------------------------------------------------------------------------
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function initialState() {
+    return {
+      term: 0, year: 0,
+      gdp: GDP0, gdpStart: GDP0, debt: DEBT0,
+      economy: 52, approval: 50, treasury: 45, equality: 48,
+      fund: 0,
+      prevRevenue: null,
+      lastShockApproval: 0,
+      ended: false, endReason: null,
+      history: []
+    };
+  }
+
+  // Map raw drivers → meter targets (0..100)
+  function meterTargets(b, cfg, state) {
+    const raw = b.raw;
+    const grantsT = b.grants;
+    // Economy: growth-based, plus accumulated level relative to trend.
+    const consGap = raw.aggConsumption / BASE_CONS - 1;
+    const dispGap = raw.aggDispBottom / BASE_DISP - 1;
+    const invDrag = (effCapRateAvg(cfg) - 0.20) * 0.06 + (cfg.corpRate - 0.21) * 0.07;
+    const pubInvest = (cfg.spend.education + cfg.spend.transportation + cfg.spend.science - BASE_INVEST);
+    const deficitDrag = clamp((-b.balance / b.gdp) - 0.05, 0, 1) * 0.12;
+    const tariffDrag = clamp(cfg.tariffRate - 0.03, 0, 1) * 0.20;
+    const growth = BASE_GROWTH + dispGap * 0.05 + consGap * 0.02 - invDrag + pubInvest * 0.010
+                   - deficitDrag - tariffDrag;
+    const econ = 52 + (growth - BASE_GROWTH) * 850;
+
+    // Treasury: debt-to-GDP and deficit.
+    const deficitPct = -b.balance / b.gdp;
+    const treas = 50 - (b.dtg - 0.97) * 42 - (deficitPct - 0.059) * 200 + (state.fund / b.gdp) * 60;
+
+    // Equality
+    const eqRaw = equalityRaw(raw, cfg, b);
+    const eq = 48 + (eqRaw - BASE_EQ_RAW) * 130;
+
+    // Approval
+    const medianBurden = raw.seg[MEDIAN_KEY].effRate;
+    const lowBurden = (raw.seg.poor.effRate + raw.seg.lowermid.effRate) / 2;
+    const safety = sumSafety(cfg.spend);
+    const serviceCut = clamp((BASE_SAFETY - safety) / BASE_SAFETY, -1, 1); // +cut / -expand
+    const serviceGap = (safety - BASE_SAFETY + 0.4 * grantsT) / b.gdp;      // share of GDP (+expand/-cut)
+    // Burden is felt NET of the services those taxes buy back. Taxing low earners
+    // is explosive — unless services/transfers visibly give it back.
+    const medianNet = (medianBurden - BASE_MEDIAN_BURDEN) - clamp(serviceGap, 0, 1) * 3.5;
+    const lowNet = clamp(lowBurden - BASE_LOW_BURDEN - clamp(serviceGap, 0, 1) * 3.0, 0, 1);
+    let appr = 50
+      - medianNet * 80
+      - lowNet * 210
+      + serviceGap * 90
+      + (growth - BASE_GROWTH) * 300
+      + (eq - 48) * 0.05;
+
+    return {
+      economy: clamp(econ, 0, 100),
+      treasury: clamp(treas, 0, 100),
+      equality: clamp(eq, 0, 100),
+      approval: clamp(appr, 0, 100),
+      growth, medianBurden, lowBurden, serviceCut, serviceGap, deficitPct
+    };
+  }
+  function effCapRateAvg(cfg) {
+    if (cfg.capMode === 'ordinary') return Math.max(...cfg.brackets.map(b => b.rate)) * 0.7;
+    return cfg.capRate;
+  }
+
+  // ---- Events ---------------------------------------------------------------
+  function policyEvents(b, cfg, t, state, rng, log) {
+    const events = [];
+    const topInd = Math.max(...cfg.brackets.map(x => x.rate));
+    const capR = effCapRateAvg(cfg);
+    const safety = sumSafety(cfg.spend);
+    const serviceCut = (BASE_SAFETY - safety) / BASE_SAFETY;
+
+    const checks = [
+      { key:'revolt', name:'Revolt', palette:'danger',
+        over: Math.max(t.lowBurden - clamp(t.serviceGap,0,1)*3.0 - 0.32, serviceCut - 0.45, (0.28 - t.approval/100) ),
+        k: 0.9,
+        effect: { approval:-15, economy:-6, equality:-4 },
+        text: 'Households below the median buckled under their tax burden while the safety net thinned. Strikes and protests spread.' },
+      { key:'capflight', name:'Capital Flight', palette:'danger',
+        over: capR - 0.45,
+        k: 1.1,
+        effect: { economy:-7, treasury:-4 },
+        text: 'Capital taxes pushed past the point of diminishing returns. Money, assets, and reported gains fled offshore — the base shrank faster than rates rose.' },
+      { key:'braindrain', name:'Brain Drain', palette:'danger',
+        over: topInd - 0.62,
+        k: 1.0,
+        effect: { economy:-6, treasury:-3 },
+        text: 'Top marginal rates climbed so high that high earners and founders relocated. Talent and its tax revenue left with them.' },
+      { key:'sanctions', name:'Sanctions & Retaliation', palette:'danger',
+        over: Math.max(cfg.tariffRate - 0.10, (cfg.spend.defense - 1.5) * 0.5),
+        k: 0.8,
+        effect: { economy:-5, approval:-6 },
+        text: 'Aggressive tariffs and saber-rattling provoked retaliation. Export markets closed and prices rose.' },
+      { key:'downgrade', name:'Debt Downgrade', palette:'danger',
+        over: Math.max(b.dtg - 1.25, t.deficitPct - 0.11),
+        k: 1.2,
+        effect: { treasury:-9, economy:-4 },
+        text: 'Deficits and debt-to-GDP ran too hot. Ratings agencies downgraded the nation; borrowing costs jumped, forcing net interest higher.' }
+    ];
+
+    for (const c of checks) {
+      if (c.over <= 0) continue;
+      const p = clamp(c.k * c.over, 0, 0.85);
+      if (rng() < p) {
+        events.push({ type:'policy', name:c.name, palette:c.palette, text:c.text, effect:c.effect });
+        if (c.key === 'downgrade') state.debtPremium = (state.debtPremium||0) + 0.006;
+      }
+    }
+    return events;
+  }
+
+  function exogenousShock(b, cfg, state, rng) {
+    // Resilience softens negative shocks.
+    const fundRatio = clamp(state.fund / (0.10 * b.gdp), 0, 1);
+    const debtResil = clamp(1 - (b.dtg - 0.6) , 0, 1);
+    const diversity = revenueDiversity(b);
+    let resilience = 0.45 * fundRatio + 0.30 * debtResil + 0.25 * diversity;
+    if (cfg.rollingAvg) resilience += 0.15;
+    resilience = clamp(resilience, 0, 0.9);
+    const soft = 1 - resilience;
+
+    const roll = rng();
+    if (roll < 0.42) return null; // calm term
+
+    const pool = [
+      { key:'recession', name:'Recession', palette:'event', neg:true,
+        base:{ economy:-9, approval:-7, treasury:-6 },
+        text:'A global recession hit. Demand fell and revenue softened.' },
+      { key:'pandemic', name:'Pandemic', palette:'event', neg:true,
+        base:{ economy:-8, approval:-6, treasury:-7 },
+        text:'A pandemic struck — emergency spending surged and the economy stalled.' },
+      { key:'oil', name:'Oil Shock', palette:'event', neg:true,
+        base:{ economy:-6, approval:-8 },
+        text:'An oil shock spiked prices. Inflation bit household budgets.' },
+      { key:'boom', name:'Economic Boom', palette:'good', neg:false,
+        base:{ economy:+8, approval:+5, treasury:+5 },
+        text:'An unexpected boom lifted incomes and tax receipts.' },
+      { key:'tech', name:'Tech Boom', palette:'good', neg:false,
+        base:{ economy:+7, treasury:+4, equality:-2 },
+        text:'A technology surge boosted growth and capital gains revenue — though the gains pooled at the top.' }
+    ];
+    const pick = pool[Math.floor(rng() * pool.length)];
+    const effect = {};
+    let drawFromFund = 0;
+    for (const k in pick.base) {
+      let v = pick.base[k];
+      if (pick.neg && v < 0) {
+        v = v * soft;
+        if (cfg.rollingAvg && (k === 'treasury')) v *= 0.6; // smoothed base
+      }
+      effect[k] = Math.round(v * 10) / 10;
+    }
+    if (pick.neg && state.fund > 0) {
+      // fund cushions approval & treasury
+      drawFromFund = Math.min(state.fund, 0.04 * b.gdp);
+      const cushion = (drawFromFund / (0.04 * b.gdp));
+      effect.approval = (effect.approval || 0) + cushion * 4;
+      effect.treasury = (effect.treasury || 0) + cushion * 4;
+      state.fund -= drawFromFund;
+    }
+    return { type:'shock', name:pick.name, palette:pick.palette, text:pick.text, effect, drawFromFund, resilience };
+  }
+  function revenueDiversity(b) {
+    const r = b.revenueBySource, tot = b.grossRevenue;
+    const shares = [r.individual, r.payroll, r.corporate, r.vat, r.tariffs, r.estate].map(x => x / tot);
+    const hhi = shares.reduce((a, s) => a + s * s, 0);
+    return clamp((0.5 - hhi) / 0.3, 0, 1); // lower concentration = more diverse
+  }
+
+  function catastropheRoll(state, rng) {
+    const base = 0.004;
+    const extra = state.approval < 35 ? (35 - state.approval) * 0.006 : 0;
+    const p = clamp(base + extra, 0, 0.22);
+    if (rng() < p) {
+      const list = [
+        { name:'Assassination', text:'With approval in free-fall, a desperate plot succeeded. The administration ends abruptly.' },
+        { name:'Coup', text:'A government this unpopular invited a coup. The military seized control.' },
+        { name:'Nuclear War', text:'Instability spiraled into catastrophe. The unthinkable happened.' }
+      ];
+      return list[Math.floor(rng() * list.length)];
+    }
+    return null;
+  }
+
+  // ---- Advance one term -----------------------------------------------------
+  function simulateTerm(state, cfg, seed) {
+    const rng = mulberry32((seed ^ (state.term * 0x9e3779b1)) >>> 0);
+    const before = { economy:state.economy, approval:state.approval, treasury:state.treasury, equality:state.equality };
+    const chain = [];   // causal explanations
+    const events = [];
+
+    // Pre-term budget snapshot (for "what changed")
+    let b = computeBudget(cfg, state);
+    let t = meterTargets(b, cfg, state);
+
+    // Simulate 4 years of compounding economy + debt.
+    for (let y = 0; y < 4; y++) {
+      b = computeBudget(cfg, state);
+      t = meterTargets(b, cfg, state);
+      // economy growth compounds
+      let g = t.growth;
+      state.gdp = state.gdp * (1 + g);
+      // balance feeds debt
+      state.debt = Math.max(0, state.debt - b.balance);
+      // stabilization fund fills on surplus
+      if (cfg.stabFund && b.balance > 0) {
+        const divert = cfg.surplusShare * b.balance;
+        state.fund += divert;
+      }
+    }
+    state.term += 1;
+    state.year = state.term * 4;
+
+    // Recompute final post-term budget & targets
+    b = computeBudget(cfg, state);
+    t = meterTargets(b, cfg, state);
+
+    // Move meters toward targets (some momentum), record causal chain.
+    const applyMeter = (key, target, label) => {
+      const prev = state[key];
+      const moved = prev + (target - prev) * 0.7;
+      state[key] = clamp(moved, 0, 100);
+    };
+    applyMeter('economy', t.economy);
+    applyMeter('approval', t.approval);
+    applyMeter('treasury', t.treasury);
+    applyMeter('equality', t.equality);
+
+    // ---- Events ----
+    const pol = policyEvents(b, cfg, t, state, rng, chain);
+    const shock = exogenousShock(b, cfg, state, rng);
+    const allEvents = pol.concat(shock ? [shock] : []);
+    for (const ev of allEvents) {
+      for (const k in ev.effect) {
+        if (['economy','approval','treasury','equality'].includes(k)) {
+          state[k] = clamp(state[k] + ev.effect[k], 0, 100);
+        }
+      }
+      events.push(ev);
+    }
+
+    // ---- Catastrophe (per term) ----
+    const cat = catastropheRoll(state, rng);
+    let catastrophe = null;
+    if (cat) { catastrophe = cat; state.ended = true; state.endReason = cat.name; }
+
+    // ---- Build "what happened & why" causal chain ----
+    buildChain(chain, before, state, b, t, cfg, allEvents);
+
+    // History snapshot
+    state.history.push({
+      term: state.term, gdp: state.gdp, debt: state.debt,
+      meters: { economy:state.economy, approval:state.approval, treasury:state.treasury, equality:state.equality },
+      balance: b.balance
+    });
+
+    if (state.term >= 3 && !state.ended) { state.ended = true; state.endReason = 'completed'; }
+
+    return { budget: b, targets: t, events, catastrophe, chain, before, after: {
+      economy:state.economy, approval:state.approval, treasury:state.treasury, equality:state.equality } };
+  }
+
+  function delta(label, before, after, unit) {
+    const d = after - before;
+    if (Math.abs(d) < 0.5) return null;
+    const dir = d > 0 ? 'rose' : 'fell';
+    return { label, d, text: `${label} ${dir} ${Math.abs(d).toFixed(0)}${unit||''}` };
+  }
+
+  function buildChain(chain, before, state, b, t, cfg, events) {
+    const lines = [];
+    const medPct = (t.medianBurden * 100).toFixed(0);
+    const lowPct = (t.lowBurden * 100).toFixed(0);
+
+    // Approval
+    const dA = state.approval - before.approval;
+    if (Math.abs(dA) >= 1) {
+      let why = [];
+      if (t.medianBurden > BASE_MEDIAN_BURDEN + 0.02) why.push(`the median household now pays about ${medPct}% of income in tax`);
+      else if (t.medianBurden < BASE_MEDIAN_BURDEN - 0.02) why.push(`you eased the median household's burden to about ${medPct}%`);
+      if (t.lowBurden > BASE_LOW_BURDEN + 0.02) why.push(`low earners are taxed near ${lowPct}% — untenable at today's cost of living`);
+      if (t.serviceCut > 0.1) why.push(`cuts to Social Security, Medicare and the safety net left people exposed`);
+      else if (t.serviceCut < -0.1) why.push(`expanded services reassured the public`);
+      if (t.growth > BASE_GROWTH + 0.005) why.push(`a growing economy lifted the mood`);
+      else if (t.growth < BASE_GROWTH - 0.005) why.push(`a slowing economy soured the mood`);
+      lines.push({ meter:'approval', d:dA, text:`Approval ${dA>0?'rose':'fell'} ${Math.abs(dA).toFixed(0)} points — ${why.join('; ') || 'small net shifts across your policy mix'}.` });
+    }
+    // Economy
+    const dE = state.economy - before.economy;
+    if (Math.abs(dE) >= 1) {
+      let why = [];
+      if (t.growth > BASE_GROWTH) why.push(`GDP grew about ${(t.growth*100).toFixed(1)}% a year`);
+      else why.push(`GDP growth slowed to about ${(t.growth*100).toFixed(1)}% a year`);
+      if (effCapRateAvg(cfg) > 0.28) why.push(`high capital and corporate taxes dampened private investment`);
+      const pubInv = cfg.spend.education + cfg.spend.transportation + cfg.spend.science;
+      if (pubInv > BASE_INVEST + 0.05) why.push(`public investment in infrastructure, education and science is paying off`);
+      if (t.deficitPct > 0.08) why.push(`large deficits crowded out the economy`);
+      lines.push({ meter:'economy', d:dE, text:`Economy ${dE>0?'rose':'fell'} ${Math.abs(dE).toFixed(0)} — ${why.join('; ')}.` });
+    }
+    // Treasury
+    const dT = state.treasury - before.treasury;
+    if (Math.abs(dT) >= 1) {
+      const bal = b.balance;
+      let why = bal >= 0
+        ? `a surplus of $${bal.toFixed(2)}T began paying down debt`
+        : `a deficit of $${(-bal).toFixed(2)}T added to the debt`;
+      why += `; debt-to-GDP is now ${(b.dtg*100).toFixed(0)}% and net interest costs $${b.netInterest.toFixed(2)}T (a bill you can't cut)`;
+      lines.push({ meter:'treasury', d:dT, text:`Treasury ${dT>0?'rose':'fell'} ${Math.abs(dT).toFixed(0)} — ${why}.` });
+    }
+    // Equality
+    const dQ = state.equality - before.equality;
+    if (Math.abs(dQ) >= 1) {
+      let why = [];
+      if (cfg.vatRate > 0.02) why.push(`a broad VAT raised money but hit lower earners hardest`);
+      if (cfg.payrollRate > 0.16) why.push(`heavy payroll taxes fell hardest below the wage cap`);
+      if (cfg.capMode === 'preferential' && cfg.capRate < 0.2) why.push(`a low capital-gains rate favored top earners`);
+      if (sumSafety(cfg.spend) > BASE_SAFETY) why.push(`expanded safety-net spending narrowed the gap`);
+      if (cfg.childGrant > 0) why.push(`child grants put cash in lower-income hands`);
+      lines.push({ meter:'equality', d:dQ, text:`Equality ${dQ>0?'rose':'fell'} ${Math.abs(dQ).toFixed(0)} — ${why.join('; ') || 'shifts in the balance of progressive and regressive taxes'}.` });
+    }
+    // Event lines
+    for (const ev of events) {
+      lines.push({ meter:'event', text:`${ev.name}: ${ev.text}` });
+    }
+    for (const l of lines) chain.push(l);
+  }
+
+  // ---------------------------------------------------------------------------
+  // 7. Scoring / scorecard
+  // ---------------------------------------------------------------------------
+  function scoreRun(state, cfg) {
+    const m = { economy:state.economy, approval:state.approval, treasury:state.treasury, equality:state.equality };
+    const composite = Math.round(0.30*m.economy + 0.25*m.approval + 0.25*m.treasury + 0.20*m.equality);
+    const grade = composite>=90?'A+':composite>=80?'A':composite>=70?'B':composite>=57?'C':composite>=44?'D':'F';
+    const b = computeBudget(cfg, state);
+    const medRate = b.raw.seg[MEDIAN_KEY].effRate;
+    const gdpPerCapStart = GDP0 / 0.335; // ~335M people (trillions/?, illustrative)
+    const gdpPerCapEnd = state.gdp / 0.335;
+    const gdpGrowthTotal = (state.gdp / GDP0 - 1) * 100;
+
+    // Legacy verdict
+    let legacy;
+    if (m.approval>=65 && m.treasury<40) legacy = 'A beloved populist who left the books a mess.';
+    else if (m.treasury>=65 && m.approval<40) legacy = 'A feared austerity hawk — solvent, but resented.';
+    else if (m.equality>=65 && m.economy<45) legacy = 'A champion of fairness who throttled growth.';
+    else if (m.economy>=65 && m.equality<40) legacy = 'A growth machine that left many behind.';
+    else if (composite>=80) legacy = 'A steady hand who balanced every plate.';
+    else if (state.endReason && !['completed'].includes(state.endReason)) legacy = `Toppled by ${state.endReason.toLowerCase()} — a cautionary tale.`;
+    else if (composite<42) legacy = 'A chaotic tenure best forgotten.';
+    else legacy = 'A middling administration — neither triumph nor disaster.';
+
+    return {
+      composite, grade, meters:m, legacy,
+      debtToGDP: b.dtg, medianEffRate: medRate,
+      gdpGrowthTotal, endReason: state.endReason
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 8. Presets
+  // ---------------------------------------------------------------------------
+  function presets() {
+    const cur = defaultConfig();
+    const nordic = defaultConfig();
+    Object.assign(nordic, {
+      brackets: [
+        { threshold:0, rate:0.20 }, { threshold:20000, rate:0.32 },
+        { threshold:55000, rate:0.44 }, { threshold:90000, rate:0.52 },
+        { threshold:600000, rate:0.56 }
+      ],
+      stdDeduction: 4000, payrollRate: 0.10, corpRate: 0.22,
+      capMode:'preferential', capRate:0.30, vatRate:0.25, tariffRate:0.02,
+      childGrant: 2000, charityMatch:0
+    });
+    nordic.spend = Object.assign({}, cur.spend, {
+      socialSecurity:1.7, medicare:1.0, health:1.3, defense:0.5,
+      incomeSecurity:1.0, education:0.5, science:0.08, transportation:0.2
+    });
+
+    // Historical bracket thresholds are converted to present-day dollars so the
+    // era's *structure* (where rates bite relative to incomes) is preserved.
+    const wwii1944 = defaultConfig();
+    Object.assign(wwii1944, {
+      brackets: [
+        { threshold:0, rate:0.19 }, { threshold:70000, rate:0.41 },
+        { threshold:400000, rate:0.62 }, { threshold:1000000, rate:0.78 },
+        { threshold:4000000, rate:0.94 }
+      ],
+      stdDeduction: 9000, payrollRate:0.02, payrollCap:64000, corpRate:0.40,
+      capMode:'preferential', capRate:0.25, vatRate:0, tariffRate:0.06,
+      estateRate:0.77, estateExemption: 1100000
+    });
+    wwii1944.spend = Object.assign({}, cur.spend, {
+      defense:2.2, socialSecurity:0.4, medicare:0.0, health:0.2,
+      incomeSecurity:0.3, education:0.1
+    });
+
+    const greatSociety = defaultConfig();
+    Object.assign(greatSociety, {
+      brackets: [
+        { threshold:0, rate:0.14 }, { threshold:80000, rate:0.25 },
+        { threshold:350000, rate:0.45 }, { threshold:1200000, rate:0.62 },
+        { threshold:5000000, rate:0.70 }
+      ],
+      stdDeduction: 13000, payrollRate:0.066, payrollCap:78000, corpRate:0.48,
+      capMode:'preferential', capRate:0.25, tariffRate:0.04,
+      estateRate:0.77, estateExemption: 700000
+    });
+    greatSociety.spend = Object.assign({}, cur.spend, {
+      defense:1.1, socialSecurity:1.0, medicare:0.5, health:0.6,
+      incomeSecurity:0.6, education:0.4
+    });
+
+    const reagan = defaultConfig();
+    Object.assign(reagan, {
+      brackets: [ { threshold:0, rate:0.15 }, { threshold:160000, rate:0.28 } ],
+      stdDeduction: 13000, payrollRate:0.151, payrollCap:125000, corpRate:0.34,
+      capMode:'preferential', capRate:0.28, tariffRate:0.03,
+      estateRate:0.55, estateExemption: 1600000
+    });
+    reagan.spend = Object.assign({}, cur.spend, {
+      defense:1.3, socialSecurity:1.2, medicare:0.6, health:0.6,
+      incomeSecurity:0.5, education:0.25
+    });
+
+    return {
+      current:   { name:'Current US',          desc:'The US tax & budget as of FY2024.', cfg:cur },
+      nordic:    { name:'Nordic-style',         desc:'High broad taxes (incl. VAT), generous services.', cfg:nordic },
+      wwii1944:  { name:'1944 — WWII Peak',      desc:'Top rate 94%, total-war budget.', cfg:wwii1944 },
+      society:   { name:'1965 — Great Society',  desc:'Top rate 70%, expanding programs.', cfg:greatSociety },
+      reagan:    { name:'1988 — Reagan Reform',  desc:'Just two brackets, top rate 28%.', cfg:reagan }
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  const API = {
+    HH, GDP0, DEBT0, BASE_GROWTH, SEGMENTS, SPEND_CATS, ACTUAL_REV, ACTUAL_SPEND,
+    BASE_MEDIAN_BURDEN, BASE_LOW_BURDEN, BASE_SAFETY,
+    defaultConfig, computeBudget, computeRaw, meterTargets,
+    initialState, simulateTerm, scoreRun, presets, clamp,
+    marginalRate, bracketTax
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  root.TH = API;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* ============================================================================
+   TAX HAVEN — UI layer.  Depends on window.TH (engine).
+   ========================================================================== */
+(function(){
+'use strict';
+const $ = (s,r=document)=>r.querySelector(s);
+const el=(t,p={},...kids)=>{const n=document.createElement(t);
+  for(const k in p){ if(k==='class')n.className=p[k]; else if(k==='html')n.innerHTML=p[k];
+    else if(k.startsWith('on'))n.addEventListener(k.slice(2),p[k]);
+    else if(k==='dataset')Object.assign(n.dataset,p[k]); else n.setAttribute(k,p[k]); }
+  for(const c of kids){ if(c==null)continue; n.append(c.nodeType?c:document.createTextNode(c)); } return n;};
+
+/* -------------------------- formatting -------------------------- */
+const T  = x => (x<0?'-$':'$')+Math.abs(x).toFixed(2)+'T';
+const PCT= x => (x*100).toFixed(x*100>=10?0:1)+'%';
+const PCT1=x => (x*100).toFixed(1)+'%';
+const money = d => d>=1000 ? '$'+Math.round(d/1000)+'k' : '$'+Math.round(d);
+const moneyFull = d => '$'+Math.round(d).toLocaleString();
+const round = x => Math.round(x);
+
+/* -------------------------- colors -------------------------- */
+const REV_COLORS={individual:'#006D77',payroll:'#83C5BE',corporate:'#0a9396',vat:'#94d2bd',
+  tariffs:'#e9d8a6',estate:'#ee9b00',other:'#bcd7d6'};
+const REV_LABELS={individual:'Individual income',payroll:'Payroll',corporate:'Corporate',
+  vat:'VAT / sales',tariffs:'Tariffs',estate:'Estate',other:'Excise & misc'};
+const REV_ORDER=['individual','payroll','corporate','vat','tariffs','estate','other'];
+const SP_COLORS={socialSecurity:'#e29578',medicare:'#ffb4a2',health:'#ffcdb2',defense:'#6d6875',
+  incomeSecurity:'#f4a261',veterans:'#e76f51',education:'#83c5be',transportation:'#adc178',
+  science:'#a8dadc',international:'#cdb4db',other:'#d6ccc2',grants:'#b5838d',netInterest:'#48525a'};
+const SP_LABELS={socialSecurity:'Social Security',medicare:'Medicare',health:'Medicaid & Health',
+  defense:'Defense',incomeSecurity:'Income Security',veterans:'Veterans',education:'Education',
+  transportation:'Transportation',science:'Science',international:'International',other:'Everything Else',
+  grants:'Grants & credits',netInterest:'Net interest'};
+const SP_ORDER=['socialSecurity','medicare','health','defense','incomeSecurity','veterans',
+  'education','transportation','science','international','other','grants','netInterest'];
+const METERS=[['economy','Economy','econ','--m-econ'],['approval','Approval','appr','--m-appr'],
+  ['treasury','Treasury','treas','--m-treas'],['equality','Equality','equal','--m-equal']];
+
+function heatColor(h){
+  h=Math.max(0,Math.min(1,h));
+  const a=[0x4a,0x9d,0x95], m=[0xe9,0xa2,0x3b], r=[0xd1,0x49,0x5b];
+  let c; if(h<.5){const k=h/.5;c=a.map((v,i)=>v+(m[i]-v)*k);}else{const k=(h-.5)/.5;c=m.map((v,i)=>v+(r[i]-v)*k);}
+  return 'rgb('+c.map(Math.round).join(',')+')';
+}
+
+/* -------------------------- tooltip -------------------------- */
+const tip=$('#tooltip');
+function tipHTML(o){
+  if(typeof o==='string')return '<span class="tt">'+o+'</span>';
+  let s='';
+  if(o.what)s+='<span class="tt"><b>What:</b> '+o.what+'</span>';
+  if(o.hi)s+='<span class="tt hi"><b>Too high:</b> '+o.hi+'</span>';
+  if(o.lo)s+='<span class="tt lo"><b>Too low:</b> '+o.lo+'</span>';
+  if(o.an)s+='<span class="tt an"><b>Real world:</b> '+o.an+'</span>';
+  return s;
+}
+function bindTip(node,content){
+  node.addEventListener('mouseenter',()=>{ tip.innerHTML=tipHTML(content); tip.classList.add('show'); place(node); });
+  node.addEventListener('mousemove',()=>place(node));
+  node.addEventListener('mouseleave',()=>tip.classList.remove('show'));
+}
+function place(node){
+  const r=node.getBoundingClientRect();
+  const tw=tip.offsetWidth, th=tip.offsetHeight;
+  let x=r.left+r.width/2-tw/2, y=r.top-th-10;
+  if(y<8){y=r.bottom+10;}
+  x=Math.max(8,Math.min(window.innerWidth-tw-8,x));
+  tip.style.left=x+'px'; tip.style.top=y+'px';
+}
+
+/* ============================ STATE ============================ */
+let config, state, seed, best=null, busy=false;
+const sliders=[]; let bracketRebuild=null;
+
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function loadBest(){ try{return JSON.parse(localStorage.getItem('taxhaven.best'));}catch(e){return null;} }
+function saveBest(o){ try{localStorage.setItem('taxhaven.best',JSON.stringify(o));}catch(e){} }
+
+/* ============================ CONTROL BUILDERS ============================ */
+// slider: {bind:[obj,key] or get/set, min,max,step, fmt, tip, heat(cfg,b), accent}
+function makeSlider(o){
+  const read=el('span',{class:'read'});
+  const info=o.tip?bindInfo(o.tip):null;
+  const nameEl=el('span',{class:'name'}, o.label, info);
+  const input=el('input',{type:'range',min:o.min,max:o.max,step:o.step});
+  input.value=o.get();
+  const wrap=el('div',{class:'ctrl'}, el('div',{class:'lab'},nameEl,read), input);
+  const sl={input,read,fmt:o.fmt,heat:o.heat||(()=>0),accent:o.accent,min:o.min,max:o.max,get:o.get};
+  input.addEventListener('input',()=>{ o.set(parseFloat(input.value)); updateSlider(sl); recompute(); });
+  sliders.push(sl);
+  return wrap;
+}
+function bindInfo(t){ const i=el('span',{class:'info'},'i'); bindTip(i,t); return i; }
+function updateSlider(sl){
+  const v=sl.get();
+  const fill=((v-sl.min)/(sl.max-sl.min))*100;
+  const h=sl.heat(config,window.__b||null);
+  const col= sl.accent ? sl.accent : heatColor(h);
+  sl.input.style.setProperty('--track',`linear-gradient(90deg,${col} 0%,${col} ${fill}%,#e3eef0 ${fill}%,#e3eef0 100%)`);
+  sl.input.style.setProperty('--thumb',col);
+  sl.read.textContent=sl.fmt(v);
+  if(parseFloat(sl.input.value)!==v) sl.input.value=v;
+}
+function makeToggle(o){
+  const info=o.tip?bindInfo(o.tip):null;
+  const sw=el('span',{class:'switch'});
+  const t=el('label',{class:'toggle'+(o.get()?' on':'')}, el('span',{class:'name',style:'font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px'},o.label,info), sw);
+  t.addEventListener('click',e=>{ if(e.target.tagName==='A')return; const nv=!o.get(); o.set(nv); t.classList.toggle('on',nv); o.after&&o.after(nv); recompute(); });
+  return el('div',{class:'ctrl'},t);
+}
+function makeSelect(o){
+  const info=o.tip?bindInfo(o.tip):null;
+  const sel=el('select');
+  o.options.forEach(([val,lab])=>sel.append(el('option',{value:val},lab)));
+  sel.value=o.get();
+  sel.addEventListener('change',()=>{ o.set(sel.value); o.after&&o.after(sel.value); recompute(); });
+  return el('div',{class:'ctrl'},el('div',{class:'lab'},el('span',{class:'name'},o.label,info),el('span')),sel);
+}
+function group(title,opts={}){ const g=el('div',{class:'group'+(opts.span?' span2':'')}); if(title)g.append(el('div',{class:'g-title'},title)); return g; }
+
+/* ============================ TOOLTIP TEXT ============================ */
+const TIP={
+  brackets:{what:'Marginal income-tax bands: each rate applies only to income within that band.',
+    hi:'Push top rates past ~60% and high earners shelter, defer, or leave — revenue can fall (the Laffer effect).',
+    lo:'Set rates too low and you starve the budget, forcing deficits and debt.',
+    an:'The US top rate is 37%; it was 94% in 1944 and 28% in 1988.'},
+  stdDeduction:{what:'Income everyone earns tax-free before any bracket applies.',
+    hi:'A very high exemption is popular but blows a hole in revenue.',
+    lo:'A low exemption taxes the working poor from the first dollar — politically explosive.',
+    an:'The 2024 US standard deduction is $14,600 (single).'},
+  payroll:{what:'Combined Social Security + Medicare tax on wages, funding those programs.',
+    hi:'Above ~16% it bites take-home pay hard and, capped, hits low earners worst.',
+    lo:'Cut it and you must fund Social Security & Medicare some other way.',
+    an:'The US combined payroll rate is 15.3%, capped near $168k of wages.'},
+  corp:{what:'Tax on corporate profits.',
+    hi:'Set far above the top individual rate and you blunt investment and push profits offshore.',
+    lo:'Set far below the individual top rate and you invite income to hide inside corporations.',
+    an:'The US corporate rate is 21% (was 35% before 2018).'},
+  capMode:{what:'How capital gains & dividends are taxed.',
+    hi:'Taxing capital at full ordinary rates raises equality but capital is the most mobile base.',
+    lo:'A low preferential rate favors the wealthy, who earn most capital income.',
+    an:'The US taxes long-term gains at a preferential ~20%.'},
+  capRate:{what:'The flat rate on capital gains under preferential/custom mode.',
+    hi:'Past ~45% capital flees fast — the base shrinks more than the rate rises.',
+    lo:'A very low rate is a large, regressive giveaway to top earners.',
+    an:'US long-term capital gains top out near 20% (23.8% with the surtax).'},
+  steppedUp:{what:'Eliminate the "stepped-up basis" that wipes out capital-gains tax at death.',
+    hi:'Closing it raises revenue and equality, but is fiercely lobbied against.',
+    lo:'Leaving it open lets the largest fortunes pass untaxed across generations.',
+    an:'Stepped-up basis is one of the biggest tax breaks for inherited wealth.'},
+  indexInfl:{what:'Index the cost basis of assets to inflation before taxing gains.',
+    hi:'Indexing is fairer but shrinks the taxable base and revenue.',
+    lo:'Without it, investors are taxed on purely inflationary "gains".',
+    an:'A long-debated reform; never enacted federally.'},
+  vat:{what:'A broad national sales / value-added tax on consumption.',
+    hi:'Efficient at raising money, but regressive — it hits low earners hardest.',
+    lo:'Leaving it at zero forgoes a large, stable revenue source.',
+    an:'Most rich nations have a VAT of 15–25%; the US has none.'},
+  tariffs:{what:'Taxes on imported goods.',
+    hi:'High tariffs raise consumer prices and invite retaliation that closes export markets.',
+    lo:'Low tariffs mean cheaper goods but little revenue from trade.',
+    an:'US effective tariffs average a few percent.'},
+  filing:{what:'Let married couples double each bracket width (file jointly).',
+    hi:'Doubling brackets is a big break for single-earner couples and cuts revenue.',
+    lo:'Turning it off raises taxes on most middle-class households.',
+    an:'US joint filers get roughly doubled brackets vs. singles.'},
+  estate:{what:'Tax on large fortunes passed at death.',
+    hi:'Very high estate rates push the wealthy into avoidance structures.',
+    lo:'A tiny estate tax lets dynastic wealth compound untaxed.',
+    an:'The US estate tax is 40% above a ~$13.6M exemption.'},
+  estateRate:{what:'The rate applied to estates above the exemption.',hi:'Past ~70% avoidance dominates.',lo:'Low rates raise little.',an:'The US rate is 40%.'},
+  rolling:{what:'Apply brackets to a 5-year trailing average of income.',
+    hi:'Smoothing strongly dampens how violently booms and busts swing revenue — great for stability.',
+    lo:'Off, revenue whipsaws with the economy and your changes bite instantly.',
+    an:'An innovation lever: trades instant response for resilience to shocks.'},
+  childGrant:{what:'Cash paid per child each year, visibly, not as a buried credit.',
+    hi:'Generous grants lift equality and approval but cost real money.',
+    lo:'Nothing here means no direct support for families.',
+    an:'Like an expanded Child Tax Credit, paid as cash.'},
+  homeowner:{what:'A grant to first-time homebuyers.',hi:'Costly and can inflate prices.',lo:'No help onto the housing ladder.',an:'Targets the middle class.'},
+  charity:{what:'Government matches a fraction of every dollar donated to charity.',hi:'Expensive and gameable.',lo:'No incentive to give.',an:'A direct match instead of a deduction.'},
+  // budget
+  socialSecurity:{what:'Pensions for retirees and the disabled — the largest federal program.',
+    hi:'Generous benefits buy approval but strain the budget.',
+    lo:'Cutting it hard triggers revolt among seniors and the vulnerable.',
+    an:'~$1.46T/yr, about a fifth of all spending.'},
+  medicare:{what:'Health coverage for seniors.',hi:'Costs balloon with generosity.',lo:'Cuts hit seniors and approval.',an:'~$0.85T/yr.'},
+  health:{what:'Medicaid and other health spending for lower-income people.',hi:'Expensive.',lo:'Cuts raise inequality and risk a health crisis.',an:'~$0.9T/yr.'},
+  defense:{what:'The military budget.',
+    hi:'Past ~$1.5T it provokes Sanctions/retaliation and crowds out everything else.',
+    lo:'Too low invites a security shock.',
+    an:'~$0.87T/yr, the largest discretionary line.'},
+  incomeSecurity:{what:'The safety net: unemployment, food aid, tax credits.',hi:'Costly.',lo:'Cuts hit the poor hardest and risk revolt.',an:'~$0.67T/yr.'},
+  veterans:{what:'Benefits and care for veterans.',hi:'Costly.',lo:'Cuts are politically toxic.',an:'~$0.32T/yr.'},
+  education:{what:'Federal education & training — a slow-burn growth investment.',hi:'Diminishing returns.',lo:'Underinvesting drags future growth.',an:'~$0.27T/yr.'},
+  transportation:{what:'Infrastructure: roads, transit, airports — boosts future Economy.',hi:'Eventually low returns.',lo:'Crumbling infrastructure slows growth.',an:'~$0.13T/yr.'},
+  science:{what:'Research & space — long-horizon growth investment.',hi:'Hard to spend well fast.',lo:'Underfunding cedes the technological edge.',an:'~$0.04T/yr.'},
+  international:{what:'Foreign aid and diplomacy.',hi:'Politically unpopular when large.',lo:'Retreat cedes global influence.',an:'~$0.06T/yr.'},
+  budgetOther:{what:'Everything else: justice, agriculture, energy, administration.',hi:'Bloat.',lo:'Government stops functioning.',an:'~$0.30T/yr.'},
+  stabFund:{what:'Bank a share of surpluses; auto-draws to cushion downturn shocks.',
+    hi:'Over-saving parks money that could buy services now (opportunity cost).',
+    lo:'Off, a recession hits the Treasury and approval at full force.',
+    an:'An innovation lever: a sovereign rainy-day fund.'},
+  surplusShare:{what:'Fraction of any surplus diverted into the stabilization fund.',hi:'Starves current services.',lo:'Fund fills too slowly to matter.',an:'Norway saves most of its oil surplus.'}
+};
+
+/* ============================ BUILD INCOME ============================ */
+function buildIncome(){
+  const root=$('#income-controls'); root.innerHTML='';
+  sliders.length=0;                 // rebuild registry (budget sliders re-added after)
+  config.__tabAccent='#4a9d95';
+
+  // Presets
+  const gp=group('Load a starting point',{span:true});
+  const pr=el('div',{class:'presets'});
+  const presets=TH.presets();
+  for(const k in presets){ const p=presets[k];
+    pr.append(el('button',{class:'preset',onclick:()=>loadPreset(k)},
+      el('span',{class:'pn'},p.name), el('span',{class:'pd'},p.desc))); }
+  gp.append(pr); root.append(gp);
+
+  // Brackets
+  const gb=group('Income tax brackets',{span:true});
+  const list=el('div',{class:'brackets',id:'band-list'});
+  const samples=el('div',{class:'samples',id:'samples'});
+  const addBtn=el('button',{class:'band-add',id:'band-add',onclick:addBand},'+ Add band');
+  gb.append(bindInfoBlock('Marginal vs. average rate',TIP.brackets), list, addBtn, samples);
+  root.append(gb);
+  bracketRebuild=()=>{ buildBands(list); updateBandAdd(addBtn); };
+  bracketRebuild();
+
+  // Deductions & payroll
+  const g1=group('Deductions & payroll');
+  g1.append(makeSlider({label:'Standard deduction',tip:TIP.stdDeduction,min:0,max:60000,step:500,
+    get:()=>config.stdDeduction,set:v=>config.stdDeduction=v,fmt:moneyFull,
+    heat:c=>TH.clamp((c.stdDeduction-42000)/30000,0,1)}));
+  g1.append(makeSlider({label:'Payroll tax (SS + Medicare)',tip:TIP.payroll,min:0,max:0.30,step:0.005,
+    get:()=>config.payrollRate,set:v=>config.payrollRate=v,fmt:PCT1,
+    heat:c=>TH.clamp((c.payrollRate-0.16)/0.12,0,1)}));
+  root.append(g1);
+
+  // Business & capital
+  const g2=group('Business & capital');
+  g2.append(makeSlider({label:'Corporate income tax',tip:TIP.corp,min:0,max:0.50,step:0.01,
+    get:()=>config.corpRate,set:v=>config.corpRate=v,fmt:PCT1,
+    heat:c=>TH.clamp((c.corpRate-0.28)/0.22,0,1)}));
+  g2.append(makeSelect({label:'Capital gains treatment',tip:TIP.capMode,
+    options:[['ordinary','Taxed as ordinary income'],['preferential','Preferential flat rate'],['custom','Custom flat rate']],
+    get:()=>config.capMode,set:v=>config.capMode=v,after:()=>refreshCapVisibility()}));
+  const capSliderWrap=makeSlider({label:'Capital gains rate',tip:TIP.capRate,min:0,max:0.60,step:0.01,
+    get:()=>config.capRate,set:v=>config.capRate=v,fmt:PCT1,
+    heat:c=>TH.clamp((c.capRate-0.40)/0.30,0,1)});
+  capSliderWrap.id='cap-rate-ctrl';
+  g2.append(capSliderWrap);
+  g2.append(makeToggle({label:'Eliminate stepped-up basis at death',tip:TIP.steppedUp,
+    get:()=>config.steppedUpElim,set:v=>config.steppedUpElim=v}));
+  g2.append(makeToggle({label:'Index basis to inflation',tip:TIP.indexInfl,
+    get:()=>config.indexInflation,set:v=>config.indexInflation=v}));
+  root.append(g2);
+
+  // Consumption & trade
+  const g3=group('Consumption & trade');
+  g3.append(makeSlider({label:'VAT / national sales tax',tip:TIP.vat,min:0,max:0.25,step:0.005,
+    get:()=>config.vatRate,set:v=>config.vatRate=v,fmt:PCT1,
+    heat:c=>TH.clamp((c.vatRate-0.05)/0.18,0,1)}));
+  g3.append(makeSlider({label:'Tariffs',tip:TIP.tariffs,min:0,max:0.30,step:0.005,
+    get:()=>config.tariffRate,set:v=>config.tariffRate=v,fmt:PCT1,
+    heat:c=>TH.clamp((c.tariffRate-0.06)/0.14,0,1)}));
+  root.append(g3);
+
+  // Wealth & status
+  const g4=group('Wealth & filing');
+  g4.append(makeToggle({label:'Estate / wealth tax',tip:TIP.estate,
+    get:()=>config.estateEnabled,set:v=>config.estateEnabled=v}));
+  g4.append(makeSlider({label:'Estate tax rate',tip:TIP.estateRate,min:0,max:0.90,step:0.01,
+    get:()=>config.estateRate,set:v=>config.estateRate=v,fmt:PCT1,
+    heat:c=>TH.clamp((c.estateRate-0.70)/0.20,0,1)}));
+  g4.append(makeToggle({label:'Married brackets doubled (file jointly)',tip:TIP.filing,
+    get:()=>config.filingDouble,set:v=>config.filingDouble=v}));
+  root.append(g4);
+
+  // Grants
+  const g5=group('Grants — paid as visible year-end cash');
+  g5.append(makeSlider({label:'Child grant (per child / yr)',tip:TIP.childGrant,min:0,max:6000,step:100,
+    get:()=>config.childGrant,set:v=>config.childGrant=v,fmt:moneyFull,accent:'#4a9d95'}));
+  g5.append(makeSlider({label:'First-time homebuyer grant',tip:TIP.homeowner,min:0,max:30000,step:500,
+    get:()=>config.homeownerGrant,set:v=>config.homeownerGrant=v,fmt:moneyFull,accent:'#4a9d95'}));
+  g5.append(makeSlider({label:'Charitable match (per $ donated)',tip:TIP.charity,min:0,max:1,step:0.05,
+    get:()=>config.charityMatch,set:v=>config.charityMatch=v,fmt:PCT1,accent:'#4a9d95'}));
+  root.append(g5);
+
+  // Smoothing
+  const g6=group('Stability');
+  g6.append(makeToggle({label:'Five-year rolling-average income basis',tip:TIP.rolling,
+    get:()=>config.rollingAvg,set:v=>config.rollingAvg=v}));
+  root.append(g6);
+
+  root.append(dataNote());
+  refreshCapVisibility();
+}
+function dataNote(){ return el('div',{class:'span2',style:'text-align:center;color:var(--muted);font-size:11px;line-height:1.5;padding:4px 0 0'},
+  'About the data: baseline calibrated to approximate US FY2024 federal actuals (receipts by source, outlays by category, debt-to-GDP). A teaching toy — directionally honest, not a macroeconomic forecast.'); }
+function bindInfoBlock(label,t){ const d=el('div',{style:'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px'},
+  el('span',{style:'font-size:12.5px;color:var(--muted);font-weight:600'},'Each rate applies only to income inside its band.'),
+  bindInfo(t)); return d; }
+function refreshCapVisibility(){ const c=$('#cap-rate-ctrl'); if(c)c.style.display=config.capMode==='ordinary'?'none':''; }
+
+/* ----- bracket bands ----- */
+function buildBands(list){
+  list.innerHTML='';
+  for(let i=sliders.length-1;i>=0;i--) if(sliders[i].isBand) sliders.splice(i,1); // drop stale band sliders
+  config.brackets.forEach((band,i)=>{
+    const next=config.brackets[i+1];
+    const upper=next?money(next.threshold):'+';
+    const fromInput=el('input',{type:'number',min:0,step:1000,value:band.threshold});
+    fromInput.addEventListener('change',()=>{ band.threshold=Math.max(0,parseInt(fromInput.value)||0); sortBands(); bracketRebuild(); recompute(); });
+    const rate=el('input',{type:'range',min:0,max:1,step:0.01,value:band.rate});
+    const rv=el('span',{class:'ratev'},PCT1(band.rate));
+    const sl={input:rate,read:rv,fmt:PCT1,min:0,max:1,get:()=>band.rate,isBand:true,
+      heat:()=>{ let h=TH.clamp((band.rate-0.50)/0.45,0,1);
+        if(i===0||band.threshold<30000) h=Math.max(h,TH.clamp((band.rate-0.12)/0.25,0,1));
+        return h; }};
+    rate.addEventListener('input',()=>{ band.rate=parseFloat(rate.value); updateSlider(sl); recompute(); });
+    sliders.push(sl);
+    const rm=el('button',{class:'rm',title:'Remove band',onclick:()=>removeBand(i)},'×');
+    const row=el('div',{class:'band'+(i===0?' locked-from':'')},
+      el('div',{class:'from'}, i===0?el('span',{},'from $0'):fromWrap(fromInput) ),
+      rate, rv, config.brackets.length>1?rm:el('span'));
+    list.append(row);
+    updateSlider(sl);
+  });
+}
+function fromWrap(input){ return el('span',{},'$',input); }
+function sortBands(){ config.brackets.sort((a,b)=>a.threshold-b.threshold); config.brackets[0].threshold=0; }
+function addBand(){ if(config.brackets.length>=7)return;
+  const last=config.brackets[config.brackets.length-1];
+  const nt=last.threshold<10000?50000:Math.round(last.threshold*2);
+  config.brackets.push({threshold:nt,rate:Math.min(0.99,last.rate+0.05)});
+  sortBands(); bracketRebuild(); recompute(); }
+function removeBand(i){ if(config.brackets.length<=1)return; config.brackets.splice(i,1); config.brackets[0].threshold=0; bracketRebuild(); recompute(); }
+function updateBandAdd(btn){ btn.disabled=config.brackets.length>=7; }
+
+/* ============================ BUILD BUDGET ============================ */
+function buildBudget(){
+  const root=$('#budget-controls'); root.innerHTML='';
+  config.__tabAccent='#e8997f';
+  const lowDanger=key=>{ const base=TH.defaultConfig().spend[key];
+    return c=>TH.clamp((base*0.6 - c.spend[key])/(base*0.6),0,1); };
+
+  const g1=group('Safety net & health');
+  [['socialSecurity',TIP.socialSecurity,3.0],['medicare',TIP.medicare,2.0],['health',TIP.health,2.5],
+   ['incomeSecurity',TIP.incomeSecurity,2.0],['veterans',TIP.veterans,1.0]].forEach(([k,tp,mx])=>{
+    g1.append(budgetSlider(k,tp,mx,lowDanger(k))); });
+  root.append(g1);
+
+  const g2=group('Defense & investment');
+  g2.append(budgetSlider('defense',TIP.defense,3.5,c=>TH.clamp((c.spend.defense-1.5)/1.3,0,1)));
+  g2.append(budgetSlider('education',TIP.education,1.5,()=>0));
+  g2.append(budgetSlider('transportation',TIP.transportation,1.0,()=>0));
+  g2.append(budgetSlider('science',TIP.science,0.6,()=>0));
+  root.append(g2);
+
+  const g3=group('Other & forced');
+  g3.append(budgetSlider('international',TIP.international,0.6,()=>0));
+  g3.append(budgetSlider('other',TIP.budgetOther,1.2,()=>0));
+  const lock=el('div',{class:'locked-line',id:'net-interest-line'},
+    el('span',{},el('span',{class:'lk'},'forced'),' Net interest on the debt ',bindInfo({what:'Interest owed on accumulated debt — you cannot slide it.',hi:'It grows as debt grows, crowding out every other priority.',lo:'Only falls by running surpluses and paying debt down.',an:'Already ~$0.9T/yr and the fastest-growing line in the US budget.'})),
+    el('span',{class:'read mono',id:'net-interest-val'},'—'));
+  g3.append(lock);
+  root.append(g3);
+
+  const g4=group('Revenue stabilization fund');
+  g4.append(makeToggle({label:'Enable rainy-day fund',tip:TIP.stabFund,
+    get:()=>config.stabFund,set:v=>config.stabFund=v}));
+  g4.append(makeSlider({label:'Share of surplus to divert',tip:TIP.surplusShare,min:0,max:0.8,step:0.05,
+    get:()=>config.surplusShare,set:v=>config.surplusShare=v,fmt:PCT1,accent:'#e8997f'}));
+  root.append(g4);
+  root.append(dataNote());
+}
+function budgetSlider(key,tip,max,heat){
+  return makeSlider({label:SP_LABELS[key],tip,min:0,max,step:0.01,
+    get:()=>config.spend[key],set:v=>config.spend[key]=v,fmt:T,heat});
+}
+
+/* ============================ PIE + LEGEND ============================ */
+const C=2*Math.PI*70;
+function ensurePie(id,keys,colors){
+  const wrap=$('#'+id);
+  if(wrap.dataset.built){return wrap.__circles;}
+  const NS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox','0 0 200 200'); svg.setAttribute('width','240'); svg.setAttribute('height','240');
+  const bg=document.createElementNS(NS,'circle'); bg.setAttribute('cx',100);bg.setAttribute('cy',100);bg.setAttribute('r',70);
+  bg.setAttribute('fill','none');bg.setAttribute('stroke','#eef4f5');bg.setAttribute('stroke-width',32); svg.append(bg);
+  const circles={};
+  keys.forEach(k=>{ const c=document.createElementNS(NS,'circle');
+    c.setAttribute('cx',100);c.setAttribute('cy',100);c.setAttribute('r',70);c.setAttribute('fill','none');
+    c.setAttribute('stroke',colors[k]);c.setAttribute('stroke-width',32);
+    c.setAttribute('stroke-dasharray','0 '+C); c.setAttribute('stroke-dashoffset','0');
+    svg.append(c); circles[k]=c; });
+  wrap.append(svg);
+  const center=el('div',{class:'pie-center'}, el('div',{class:'big',id:id+'-total'},''), el('div',{class:'sub'},id==='pie-income'?'revenue':'spending'));
+  wrap.append(center);
+  wrap.dataset.built='1'; wrap.__circles=circles; return circles;
+}
+function renderPie(id,entries){ // entries:[{key,value}]
+  const total=entries.reduce((a,e)=>a+Math.max(0,e.value),0);
+  const colors=id==='pie-income'?REV_COLORS:SP_COLORS;
+  const keys=entries.map(e=>e.key);
+  const circles=ensurePie(id,keys,colors);
+  let cum=0;
+  entries.forEach(e=>{ const c=circles[e.key]; if(!c)return;
+    const frac=total>0?Math.max(0,e.value)/total:0; const len=frac*C;
+    c.setAttribute('stroke-dasharray',len.toFixed(2)+' '+(C-len).toFixed(2));
+    c.setAttribute('stroke-dashoffset',(-cum).toFixed(2)); cum+=len; });
+  $('#'+id+'-total').textContent=T(total);
+}
+function renderLegend(id,entries,opts={}){
+  const root=$('#'+id); root.innerHTML='';
+  const colors=id==='legend-income'?REV_COLORS:SP_COLORS;
+  const labels=id==='legend-income'?REV_LABELS:SP_LABELS;
+  const total=entries.reduce((a,e)=>a+Math.max(0,e.value),0);
+  entries.forEach(e=>{ const pct=total>0?(Math.max(0,e.value)/total*100):0;
+    root.append(el('div',{class:'row'+(e.value<=0.0005?' dim':'')},
+      el('span',{class:'sw',style:'background:'+colors[e.key]}),
+      el('span',{class:'lbl'},labels[e.key], e.key==='netInterest'?el('span',{class:'locked',style:'margin-left:6px'},'locked'):null),
+      el('span',{class:'amt'},T(e.value)),
+      el('span',{class:'pct'},pct.toFixed(0)+'%'))); });
+}
+
+/* ============================ METERS / LEDGER / ACTION ============================ */
+function buildMeters(){
+  const root=$('#meters'); root.innerHTML='';
+  METERS.forEach(([key,label,cls,cssvar])=>{
+    const w=el('div',{class:'meter '+cls,id:'meter-'+key},
+      el('div',{class:'top'},el('span',{},label),el('span',{class:'val',id:'mval-'+key},'')),
+      el('div',{class:'bar'},el('div',{class:'fill',id:'mfill-'+key}),el('div',{class:'tick',id:'mtick-'+key})),
+      el('div',{class:'fig',id:'mfig-'+key},''));
+    bindTip(w,'');
+    w.addEventListener('mouseenter',()=>{ tip.innerHTML=tipHTML(meterTip(key)); place(w); });
+    root.append(w);
+  });
+}
+function meterTip(key){
+  const b=window.__b, t=window.__t;
+  if(key==='economy')return {what:'Standard of living & GDP growth.',an:'Now: GDP $'+state.gdp.toFixed(1)+'T, growing ~'+PCT1(t.growth)+'/yr.'};
+  if(key==='approval')return {what:'Public approval of your government.',an:'Now: '+round(state.approval)+'% approval. Below ~35% invites catastrophe.'};
+  if(key==='treasury')return {what:'Fiscal health — balance & debt.',an:'Now: '+(b.balance>=0?'surplus ':'deficit ')+T(Math.abs(b.balance))+', debt-to-GDP '+(b.dtg*100).toFixed(0)+'%.'};
+  if(key==='equality')return {what:'How fairly the burden & benefits are shared.',an:'Now: inequality (Gini) ≈ '+gini().toFixed(2)+'.'};
+}
+function gini(){ return 0.58 - state.equality/100*0.26; }
+function renderMeters(){
+  const t=window.__t;
+  METERS.forEach(([key])=>{
+    $('#mfill-'+key).style.width=state[key]+'%';
+    $('#mtick-'+key).style.left=t[key]+'%';
+    $('#mval-'+key).textContent=round(state[key]);
+  });
+  const b=window.__b;
+  $('#mfig-economy').textContent='GDP +'+PCT1(t.growth)+'/yr';
+  $('#mfig-approval').textContent=round(state.approval)+'% approval';
+  $('#mfig-treasury').textContent='debt/GDP '+(b.dtg*100).toFixed(0)+'%';
+  $('#mfig-equality').textContent='Gini ≈ '+gini().toFixed(2);
+}
+function renderLedger(){
+  const b=window.__b; const root=$('#ledger'); root.innerHTML='';
+  const bal=b.balance;
+  root.append(
+    el('div',{class:'item'},el('span',{class:'k'},'Revenue'),el('span',{class:'v'},T(b.grossRevenue))),
+    el('div',{class:'item'},el('span',{class:'k'},'Spending'),el('span',{class:'v'},T(b.totalSpend))),
+    el('div',{class:'item'},el('span',{class:'k'},bal>=0?'Surplus':'Deficit'),el('span',{class:'v '+(bal>=0?'pos':'neg')},T(Math.abs(bal)))));
+}
+function renderAction(){
+  const b=window.__b; const bal=b.balance;
+  $('#bal-lab').textContent=bal>=0?'Projected surplus':'Projected deficit';
+  const v=$('#bal-val'); v.textContent=(bal>=0?'+':'−')+T(Math.abs(bal)).replace('$','$'); v.className='v '+(bal>=0?'pos':'neg');
+  $('#bal-sub').textContent=bal>=0?'paying down debt':'added to $'+state.debt.toFixed(1)+'T debt';
+}
+function updateTermCounter(){
+  const up=state.term+1; const y0=state.term*4+1, y1=state.term*4+4;
+  $('#term-counter').textContent='Term '+Math.min(up,3)+' · Year '+y0+'–'+y1+' of 12';
+  $('#simulate').textContent='Simulate Term '+up+' →';
+}
+
+/* ============================ RECOMPUTE ============================ */
+function recompute(){
+  const b=TH.computeBudget(config,state);
+  const t=TH.meterTargets(b,config,state);
+  window.__b=b; window.__t=t;
+  renderPie('pie-income',REV_ORDER.map(k=>({key:k,value:b.revenueBySource[k]})));
+  renderLegend('legend-income',REV_ORDER.map(k=>({key:k,value:b.revenueBySource[k]})));
+  renderPie('pie-budget',SP_ORDER.map(k=>({key:k,value:b.spendBySource[k]})));
+  renderLegend('legend-budget',SP_ORDER.map(k=>({key:k,value:b.spendBySource[k]})));
+  const niv=$('#net-interest-val'); if(niv)niv.textContent=T(b.netInterest);
+  renderMeters(); renderLedger(); renderAction();
+  sliders.forEach(updateSlider);
+  updateBandSamples();
+}
+function updateBandSamples(){
+  const box=$('#samples'); if(!box)return;
+  const b=window.__b; const seg=b.raw.seg;
+  const picks=[['poor','$20k'],['middle','$75k'],['affluent','$300k'],['top01','$5M']];
+  box.innerHTML='';
+  picks.forEach(([k,lab])=>{ const s=seg[k];
+    box.append(el('div',{class:'s'},el('div',{class:'i'},lab),
+      el('div',{class:'r'},PCT(s.effRate),el('br'),el('small',{},'avg rate')))); });
+}
+
+/* ============================ SIMULATE FLOW ============================ */
+function doSimulate(){
+  if(busy||state.ended)return; busy=true;
+  $('#simulate').disabled=true;
+  const res=TH.simulateTerm(state,config,seed);
+  recompute(); updateTermCounter();
+  showEvents(res.events,0,()=>showReport(res));
+}
+function showEvents(list,i,done){
+  const layer=$('#event-layer');
+  if(i>=list.length){ layer.classList.remove('show'); layer.innerHTML=''; done(); return; }
+  const ev=list[i];
+  const ico={Revolt:'🔥','Capital Flight':'🛫','Brain Drain':'🧠','Sanctions & Retaliation':'⚔️','Debt Downgrade':'📉',
+    Recession:'📉',Pandemic:'🦠','Oil Shock':'🛢️','Economic Boom':'📈','Tech Boom':'🚀'}[ev.name]||'⚡';
+  const kind=ev.type==='policy'?'Policy backfire':(ev.palette==='good'?'Lucky break':'Exogenous shock');
+  const effects=el('div',{class:'ev-effects'});
+  ['economy','approval','treasury','equality'].forEach(k=>{ if(ev.effect[k]){ const v=ev.effect[k];
+    effects.append(el('span',{class:'eff-chip '+(v>0?'up':'down')}, (v>0?'+':'')+v.toFixed(0)+' '+k.charAt(0).toUpperCase()+k.slice(1))); }});
+  const card=el('div',{class:'event-card '+ev.palette},
+    el('div',{class:'ev-band'},el('span',{class:'ev-ico'},ico),
+      el('div',{},el('div',{class:'ev-kind'},kind),el('div',{class:'ev-name'},ev.name))),
+    el('div',{class:'ev-body'}, el('div',{class:'ev-text'},ev.text), effects,
+      el('button',{class:'ev-cont',onclick:()=>showEvents(list,i+1,done)}, i+1<list.length?'Next →':'Continue →')));
+  layer.innerHTML=''; layer.append(card); layer.classList.add('show');
+}
+function showReport(res){
+  const before=res.before, after=res.after;
+  const moves=el('div',{class:'meter-moves'});
+  METERS.forEach(([key,label])=>{ const d=after[key]-before[key];
+    moves.append(el('div',{class:'mm'},el('div',{class:'mt'},label),
+      el('div',{class:'mv'},el('span',{class:'now'},round(after[key])),
+        Math.abs(d)>=0.5?el('span',{class:'ch '+(d>0?'up':'down')},(d>0?'▲':'▼')+Math.abs(d).toFixed(0)):el('span',{class:'ch'},'—')))); });
+  const chain=el('div',{class:'chain'});
+  if(res.chain.length===0) chain.append(el('div',{class:'c'},el('span',{class:'ic',style:'background:#bcd'}),'A quiet term — your settings held the country roughly steady.'));
+  res.chain.forEach(l=>chain.append(el('div',{class:'c '+(l.meter||'event')},el('span',{class:'ic'}),l.text)));
+  const ended=state.ended;
+  const btn=el('button',{class:'btn btn-primary',onclick:()=>{ closeOverlay(); if(ended)showScorecard(); else{ busy=false; $('#simulate').disabled=false; recompute(); } }},
+    ended?'See your legacy →':'Continue to next term →');
+  openModal(el('div',{class:'modal wide report',dataset:{dismiss:'0'}},
+    el('div',{class:'term-tag'},'Term '+state.term+' resolved'),
+    el('h2',{},'What happened & why'),
+    el('p',{class:'lead'},'Every meter move traces back to a choice you made.'),
+    moves, chain,
+    el('div',{class:'close-row'},btn)));
+}
+
+/* ============================ SCORECARD ============================ */
+function showScorecard(){
+  const sc=TH.scoreRun(state,config);
+  $('#simulate').textContent='Campaign complete'; $('#simulate').disabled=true;
+  const isNew=!best||sc.composite>best.composite;
+  if(isNew){ best={composite:sc.composite,grade:sc.grade}; saveBest(best); }
+  const fm=el('div',{class:'final-meters'});
+  METERS.forEach(([key,label])=>fm.append(el('div',{class:'fm'},el('div',{class:'l'},label),el('div',{class:'v'},round(sc.meters[key])))));
+  const hl=el('div',{class:'headlines'},
+    headline('Final debt-to-GDP',(sc.debtToGDP*100).toFixed(0)+'%'),
+    headline("Median household's effective tax rate",PCT(sc.medianEffRate)),
+    headline('GDP growth over 12 years',(sc.gdpGrowthTotal>=0?'+':'')+sc.gdpGrowthTotal.toFixed(0)+'%'));
+  const endNote = sc.endReason && sc.endReason!=='completed'
+    ? el('div',{class:'endr'},'⚠ Your term ended early: '+sc.endReason+'.')
+    : el('div',{class:'endr'},'You served all three terms.');
+  openModal(el('div',{class:'modal wide',dataset:{dismiss:'0'}},
+    el('div',{class:'score-hero'},
+      el('div',{class:'grade-badge'},el('div',{class:'g'},sc.grade),el('div',{class:'s'},sc.composite+'/100')),
+      el('div',{}, el('h2',{style:'margin-bottom:2px'},'Your legacy'),
+        el('div',{class:'legacy'},sc.legacy), endNote)),
+    fm, hl,
+    el('div',{class:'best '+(isNew?'new':'old')}, isNew?('🏆 New best score: '+sc.composite+' ('+sc.grade+')!'):('Your best score: '+(best?best.composite+' ('+best.grade+')':'—'))),
+    el('div',{class:'datanote'},'Baseline calibrated to approximate US FY2024 federal actuals (receipts, outlays, debt-to-GDP). A teaching toy — directionally honest, not a forecast.'),
+    el('div',{class:'close-row'},
+      el('button',{class:'btn btn-ghost',onclick:()=>{ closeOverlay(); }},'Review final policy'),
+      el('button',{class:'btn btn-primary',onclick:replay},'Play again →'))));
+}
+function headline(k,v){ return el('div',{class:'hl'},el('span',{class:'k'},k),el('span',{class:'v'},v)); }
+function replay(){ closeOverlay(); state=TH.initialState(); seed=(Math.random()*1e9)|0; busy=false; $('#simulate').disabled=false; updateTermCounter(); recompute(); switchTab('income'); }
+
+/* ============================ OVERLAY / ONBOARDING ============================ */
+function openModal(node){ const root=$('#overlay-root'); root.innerHTML=''; const ov=el('div',{class:'overlay'},node); ov.addEventListener('mousedown',e=>{ if(e.target===ov && node.dataset.dismiss!=='0') closeOverlay(); }); root.append(ov); }
+function closeOverlay(){ $('#overlay-root').innerHTML=''; }
+function showOnboarding(){
+  const steps=[['1','<b>Redesign the tax code & budget.</b> Drag any lever on the Income and Budget tabs — realistic or not.'],
+    ['2','<b>Watch the four meters.</b> Economy, Approval, Treasury and Equality react live as you edit. Hover any control for what it does.'],
+    ['3','<b>Mind the spine.</b> Revenue minus spending is your balance; deficits pile into debt, and net interest becomes a bill you can\'t cut.'],
+    ['4','<b>Simulate a term.</b> Four years pass, events strike, and a panel explains exactly why each meter moved. Survive three terms — twelve years.']];
+  const list=el('div',{class:'howto-list'});
+  steps.forEach(([n,t])=>list.append(el('div',{class:'h'},el('div',{class:'n'},n),el('div',{class:'t',html:t}))));
+  const m=el('div',{class:'modal',dataset:{dismiss:'0'}},
+    el('h2',{},'You are now ruler of the United States.'),
+    el('p',{class:'lead'},'Redesign America\'s federal taxes and budget however you like — then live with the consequences.'),
+    list,
+    el('div',{class:'close-row'},el('button',{class:'btn btn-primary',onclick:()=>{ closeOverlay(); try{localStorage.setItem('taxhaven.seen','1');}catch(e){} }},'Take office →')));
+  openModal(m);
+}
+
+/* ============================ TABS ============================ */
+function switchTab(name){
+  $$('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  $('#panel-income').classList.toggle('hidden',name!=='income');
+  $('#panel-budget').classList.toggle('hidden',name!=='budget');
+}
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+
+/* ============================ PRESETS ============================ */
+function loadPreset(key){ const p=TH.presets()[key]; if(!p)return;
+  config=clone(p.cfg); buildIncome(); buildBudget(); recompute(); }
+
+/* ============================ INIT ============================ */
+function init(){
+  seed=(Math.random()*1e9)|0;
+  config=clone(TH.presets().current.cfg);
+  state=TH.initialState();
+  best=loadBest();
+  buildMeters(); buildIncome(); buildBudget();
+  $$('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+  $('#simulate').addEventListener('click',doSimulate);
+  updateTermCounter(); recompute();
+  if(!safeGet('taxhaven.seen')) showOnboarding();
+}
+function safeGet(k){ try{return localStorage.getItem(k);}catch(e){return '1';} }
+document.addEventListener('DOMContentLoaded',init);
+})();
+
+</script>
+</body>
+</html>
