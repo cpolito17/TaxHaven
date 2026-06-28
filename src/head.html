@@ -126,10 +126,12 @@ select{cursor:pointer}
 
 /* Bracket editor */
 .brackets{display:flex;flex-direction:column;gap:9px}
-.band{display:grid;grid-template-columns:64px 1fr 54px 26px;gap:10px;align-items:center;
+.band{display:grid;grid-template-columns:108px 1fr 54px 26px;gap:10px;align-items:center;
   background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
-.band .from{font-size:11px;color:var(--muted);font-weight:600}
-.band .from input{width:100%;font-size:12px;padding:4px 5px}
+.band .from{font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:2px;white-space:nowrap}
+.band .from input{width:100%;min-width:0;font-size:12px;padding:4px 5px}
+.band .from input::-webkit-outer-spin-button,.band .from input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.band .from input[type=number]{-moz-appearance:textfield}
 .band .ratev{font-size:13.5px;font-weight:750;text-align:right;font-variant-numeric:tabular-nums}
 .band .rm{width:22px;height:22px;border-radius:6px;background:#f0e2df;color:#b5544a;font-weight:800;font-size:14px;line-height:1}
 .band .rm:hover{background:#e9b8b0}
