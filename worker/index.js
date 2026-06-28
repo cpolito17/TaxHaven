@@ -1,27 +1,15 @@
 /**
  * Tax Haven — Cloudflare Worker
  *
- * Serves the single-file game at charliepolito.com/taxhaven (and /taxhaven/...).
- * Static assets live in ./public and are exposed through the ASSETS binding.
- * We strip the /taxhaven path prefix so the bundled index.html resolves at the
- * sub-path, then hand the request to the assets binding.
+ * Serves the single-file game at charliepolito.com/taxhaven (and any sub-path).
+ * The game is one fully self-contained index.html with no other assets, so the
+ * Worker always returns that one file from the ASSETS binding. With
+ * html_handling = "none" (see wrangler.toml) the asset router serves
+ * /index.html directly — no trailing-slash/canonicalization redirects.
  */
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-
-    // Strip the "/taxhaven" mount point, leaving the asset-relative path.
-    let path = url.pathname.replace(/^\/taxhaven/, '');
-    if (path === '' || path === '/') path = '/index.html';
-
-    const assetUrl = new URL(path, url.origin);
-    const res = await env.ASSETS.fetch(new Request(assetUrl, request));
-
-    // The game is fully self-contained; allow long caching of the one asset.
-    const headers = new Headers(res.headers);
-    if (res.ok && path.endsWith('.html')) {
-      headers.set('Cache-Control', 'public, max-age=3600');
-    }
-    return new Response(res.body, { status: res.status, headers });
+    const origin = new URL(request.url).origin;
+    return env.ASSETS.fetch(new Request(origin + '/index.html', request));
   }
 };

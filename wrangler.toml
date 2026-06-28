@@ -9,6 +9,7 @@ compatibility_date = "2025-09-01"
 directory = "./public"
 binding = "ASSETS"
 run_worker_first = true
+html_handling = "none"   # serve /index.html directly; no trailing-slash redirects
 
 # Mount the worker at charliepolito.com/taxhaven and below.
 # Requires the charliepolito.com zone to be active on this Cloudflare account.
