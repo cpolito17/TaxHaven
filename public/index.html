@@ -3,7 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tax Haven — redesign America's taxes &amp; budget</title>
+<title>Tax Haven — Free US Tax &amp; Budget Simulator</title>
+<meta name="description" content="Redesign US taxes and federal spending, simulate 12 years in office, and see how your policies affect growth, debt, approval, and equality.">
+<meta name="robots" content="index, follow">
+<meta name="author" content="Charlie Polito">
+<link rel="canonical" href="https://charliepolito.com/taxhaven">
+<link rel="icon" type="image/svg+xml" href="/taxhaven/hd-icon.svg">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tax Haven — US Tax &amp; Budget Simulator">
+<meta property="og:description" content="Take control of US taxes and federal spending, then simulate the economic and political consequences.">
+<meta property="og:url" content="https://charliepolito.com/taxhaven">
+<meta property="og:site_name" content="Charlie Polito">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Tax Haven — US Tax &amp; Budget Simulator">
+<meta name="twitter:description" content="Redesign the federal tax code and budget, then see what happens over 12 simulated years.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Tax Haven","url":"https://charliepolito.com/taxhaven","applicationCategory":"GameApplication","operatingSystem":"Any","isAccessibleForFree":true,"description":"An educational US federal tax and budget policy simulator by Charlie Polito.","author":{"@type":"Person","name":"Charlie Polito","url":"https://charliepolito.com"}}</script>
 <style>
 /* ============================ Design system ============================ */
 :root{
@@ -28,11 +42,16 @@ h1,h2,h3{font-weight:650;letter-spacing:-.01em}
 .status{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,var(--nav),var(--nav-d));
   color:#eafcfd;box-shadow:var(--shadow);}
 .status-inner{max-width:1140px;margin:0 auto;padding:10px 22px;display:grid;
-  grid-template-columns:auto 1fr auto;gap:22px;align-items:center}
+  grid-template-columns:auto auto 1fr auto;gap:18px;align-items:center}
 .brand{display:flex;flex-direction:column;gap:1px;white-space:nowrap}
 .brand .name{font-size:21px;font-weight:750;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
 .brand .name .mark{font-size:18px}
 .brand .term{font-size:12px;color:#9fd6da;font-weight:600}
+.portfolio-link{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid rgba(255,255,255,.3);
+  border-radius:9px;color:#fff;text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap;transition:.15s}
+.portfolio-link:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.55)}
+.portfolio-link:focus-visible{outline:3px solid #ffd98a;outline-offset:2px}
+.portfolio-link img{width:22px;height:22px;border-radius:5px}
 .meters{display:flex;gap:16px;justify-content:center}
 .meter{min-width:118px}
 .meter .top{display:flex;justify-content:space-between;font-size:11px;font-weight:700;
@@ -50,6 +69,8 @@ h1,h2,h3{font-weight:650;letter-spacing:-.01em}
 .ledger .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#9fd6da;font-weight:600}
 .ledger .v{font-size:16px;font-weight:700}
 .ledger .v.pos{color:#7ff0c8} .ledger .v.neg{color:#ffb3a7}
+@media(max-width:960px){.status-inner{grid-template-columns:auto auto 1fr}.meters{grid-column:1/-1;order:4}.ledger{justify-self:end}}
+@media(max-width:600px){.status-inner{grid-template-columns:1fr auto;padding:9px 14px}.portfolio-link span{display:none}.ledger{display:none}.meters{overflow-x:auto;justify-content:flex-start;padding-bottom:3px}.meter{min-width:105px}}
 
 /* ============================ Tabs ============================ */
 .tabs{max-width:1140px;margin:18px auto 0;padding:0 22px;display:flex;gap:10px}
@@ -269,6 +290,9 @@ select{cursor:pointer}
       <span class="name"><span class="mark">🏛️</span> Tax Haven</span>
       <span class="term" id="term-counter">Term 1 · Year 1–4 of 12</span>
     </div>
+    <a class="portfolio-link" href="https://charliepolito.com" aria-label="Return to Charlie Polito's portfolio">
+      <img src="/taxhaven/hd-icon.svg" alt="" width="22" height="22"> <span>Portfolio</span>
+    </a>
     <div class="meters" id="meters"></div>
     <div class="ledger" id="ledger"></div>
   </div>

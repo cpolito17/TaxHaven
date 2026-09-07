@@ -1,7 +1,6 @@
-#!/bin/bash
-# Assemble the single self-contained game into public/index.html
-# from its parts (inlined CSS + engine + UI). Zero runtime dependencies.
-set -e
+#!/usr/bin/env bash
+# Assemble the self-contained game from its source parts.
+set -euo pipefail
 cd "$(dirname "$0")"
 OUT="../public/index.html"
 {

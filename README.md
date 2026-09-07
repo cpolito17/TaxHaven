@@ -1,71 +1,81 @@
 # Tax Haven
 
-A browser game where you're crowned ruler of the United States, redesign the
-federal **income-tax system** and the **federal budget** however you like, then
-press **Simulate** to find out what your choices did to the country. It's a game
-first, but doubles as an educational tool — every outcome is explained in a
-post-term *"What happened & why"* panel.
+Tax Haven is a free, browser-based US tax and federal budget simulator. Rewrite the income-tax code, change spending priorities, and simulate three four-year terms to see how those choices affect economic growth, public approval, federal debt, and equality.
 
-Runs **entirely in the browser**: all data, logic, and simulation are baked in.
-Zero network calls, works offline, desktop-first.
+**Play it:** [charliepolito.com/taxhaven](https://charliepolito.com/taxhaven)
 
-## Play
+**Portfolio:** [charliepolito.com](https://charliepolito.com/)
 
-- **Hosted:** https://charliepolito.com/taxhaven
-- **Local:** open `public/index.html` in a browser, or serve it:
-  ```bash
-  cd public && python3 -m http.server 8777   # → http://localhost:8777
-  ```
+**Source:** [github.com/cpolito17/TaxHaven](https://github.com/cpolito17/TaxHaven)
 
-## How it works
+## What you can change
 
-- **Income tab** — bracket editor (≤7 bands, live marginal-vs-average readout),
-  payroll, corporate, standard deduction, capital-gains treatment, VAT, tariffs,
-  estate tax, filing-status doubling, 5-year rolling-average basis, and cash
-  grants. Five presets: Current US, Nordic, 1944, 1965, 1988.
-- **Budget tab** — free sliders for every category; **net interest** is forced on
-  you and grows with the debt (the "nothing is free" spine). Optional rainy-day
-  stabilization fund.
-- **Four meters** — Economy, Approval, Treasury, Equality (0–100), each with a
-  real supporting figure. Revenue elasticity (Laffer), regressivity, public
-  investment, deficits, and shocks all move them in directionally-honest ways.
-- **Events** — policy backfires (threshold-gated), exogenous shocks (luck,
-  softened by resilience), and rare approval-gated catastrophes.
+- Build up to seven income-tax brackets and compare household tax burdens.
+- Adjust payroll, corporate, capital-gains, VAT, tariff, and estate taxes.
+- Set spending across Social Security, health, defense, education, infrastructure, science, and other programs.
+- Test historical and international policy presets.
+- Simulate 12 years of policy effects, shocks, debt service, and political consequences.
+- Review an end-of-term explanation and final scorecard.
 
-Baseline calibrated to approximate **US FY2024** federal actuals. It's a teaching
-toy — directionally honest, not a macroeconomic forecast.
+The model is calibrated to approximate US fiscal year 2024 federal totals. It is an educational game with directionally realistic relationships, not financial advice or a macroeconomic forecast.
 
-## Repo layout
+## Privacy and security
 
-```
-public/index.html   built, self-contained game (the deployed artifact)
-src/                game source — assembled into public/index.html
-  head.html         markup + CSS
-  engine.js         simulation engine (also node-testable)
-  ui.js             UI / interaction layer
-  build.sh          concatenates the parts → public/index.html
-worker/index.js     Cloudflare Worker that serves the game at /taxhaven
-wrangler.toml       Worker + static-assets + route config
-MANDATE-spec.md     original design spec
-```
+Tax Haven runs locally in the browser and makes no application network requests. It does not use accounts, analytics, cookies, or a backend database. The only saved data is the player's best score and onboarding preference in browser local storage.
 
-## Build
+The Cloudflare Worker restricts requests to the published `/taxhaven` route, allows only `GET` and `HEAD`, and adds browser security headers. The application contains no API keys or user-submitted server data.
 
-The deployed file is generated from `src/`:
+## Run locally
+
+No dependencies are required. Serve the `public` directory with any static web server:
 
 ```bash
-bash src/build.sh    # writes public/index.html
+python3 -m http.server 8777 --directory public
 ```
 
-## Deploy (Cloudflare Worker → charliepolito.com/taxhaven)
+Then open [http://localhost:8777](http://localhost:8777).
+
+## Development
+
+The editable source is split into three files and assembled into one deployment page:
+
+```text
+src/head.html       HTML and CSS
+src/engine.js       simulation model (usable from Node.js)
+src/ui.js           browser interaction layer
+src/build.sh        build script
+public/index.html   generated deployment artifact
+worker/index.js     Cloudflare routing and security headers
+wrangler.toml       Worker, assets, and custom-domain route
+MANDATE-spec.md     original product specification
+```
+
+Build the deployed page:
 
 ```bash
-npx wrangler login          # one-time, authorizes your Cloudflare account
-npx wrangler deploy         # publishes the worker + assets to the route
+bash src/build.sh
 ```
 
-The route `charliepolito.com/taxhaven*` requires the `charliepolito.com` zone to
-be on the same Cloudflare account. The Worker takes precedence over the existing
-site for that path prefix; the rest of the domain is untouched.
+Run a Cloudflare development preview:
 
-`npx wrangler dev` runs it locally for a production-like preview.
+```bash
+npx wrangler dev
+```
+
+Deploy to the configured custom-domain route:
+
+```bash
+npx wrangler deploy
+```
+
+## Technical notes
+
+- Vanilla HTML, CSS, and JavaScript
+- Fully client-side simulation
+- Responsive, keyboard-accessible controls
+- Cloudflare Workers static assets
+- SEO metadata, canonical URL, structured data, and social sharing metadata
+
+## License
+
+No license has been granted. Copyright © Charlie Polito. See the repository owner before reusing the source.

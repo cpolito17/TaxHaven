@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check src/engine.js
+      - run: node --check src/ui.js
+      - run: node --check worker/index.js
+      - run: bash src/build.sh
+      - name: Confirm the generated page is committed
+        run: git diff --exit-code -- public/index.html
